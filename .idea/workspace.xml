@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6081203b-631a-4ceb-99ce-88b5bf19e3d5" name="Changes" comment="- Implement token-based authentication with backend API&#10;- Add AsyncStorage for token management&#10;- Fix navigation issues with auth state tracking&#10;- Update login and logout functionality&#10;- Clean up code and remove redundant comments" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="dev" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "CodeCrafted1"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/nagathota-stevenson/cartechai.git",
+    "accountId": "54e72c92-37d4-453b-ab5d-48ad925c4b62"
+  }
+}]]></component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="2vqXgVLwVMc4TbsWONQNilhbUej" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "js.linters.configure.manually.selectedeslint": "true",
+    "last_opened_file_path": "/Users/oleksii/project/cartechai",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.standard": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.standard": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "/opt/homebrew/lib/node_modules/prettier",
+    "settings.editor.selected.configurable": "settings.javascript.linters.eslint",
+    "ts.external.directory.path": "/Applications/WebStorm.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-WS-242.23726.96" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6081203b-631a-4ceb-99ce-88b5bf19e3d5" name="Changes" comment="" />
+      <created>1730199602764</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1730199602764</updated>
+      <workItem from="1730199605777" duration="89000" />
+      <workItem from="1744873690348" duration="46236000" />
+    </task>
+    <task id="LOCAL-00001" summary="Fix: Add TypeScript type definitions to CustomDrawer component">
+      <option name="closed" value="true" />
+      <created>1744899120306</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1744899120306</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat: Update car make selection to use car-specific API endpoint">
+      <option name="closed" value="true" />
+      <created>1744967404736</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1744967404736</updated>
+    </task>
+    <task id="LOCAL-00003" summary="refactor: Extract car types, constants, and API services into separate modules">
+      <option name="closed" value="true" />
+      <created>1744982157333</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1744982157333</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Adjust drawer button position for different screen sizes and status bar heights">
+      <option name="closed" value="true" />
+      <created>1744987856418</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1744987856418</updated>
+    </task>
+    <task id="LOCAL-00005" summary="- Implement token-based authentication with backend API&#10;- Add AsyncStorage for token management&#10;- Fix navigation issues with auth state tracking&#10;- Update login and logout functionality&#10;- Clean up code and remove redundant comments">
+      <option name="closed" value="true" />
+      <created>1745229553779</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1745229553779</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Fix: Add TypeScript type definitions to CustomDrawer component" />
+    <MESSAGE value="feat: Update car make selection to use car-specific API endpoint" />
+    <MESSAGE value="refactor: Extract car types, constants, and API services into separate modules" />
+    <MESSAGE value="Adjust drawer button position for different screen sizes and status bar heights" />
+    <MESSAGE value="- Implement token-based authentication with backend API&#10;- Add AsyncStorage for token management&#10;- Fix navigation issues with auth state tracking&#10;- Update login and logout functionality&#10;- Clean up code and remove redundant comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Implement token-based authentication with backend API&#10;- Add AsyncStorage for token management&#10;- Fix navigation issues with auth state tracking&#10;- Update login and logout functionality&#10;- Clean up code and remove redundant comments" />
+  </component>
+</project>
