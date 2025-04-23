@@ -43,6 +43,7 @@ export default function SignupScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const width = useWindowDimensions().width * 0.9;
 
   // Form data state
@@ -158,10 +159,53 @@ export default function SignupScreen() {
     return true;
   };
 
-  // Proceed to step 2
-  const handleNextStep = () => {
-    if (validateStep1()) {
+  // Handle step 1 submission and proceed to step 2
+  const handleNextStep = async () => {
+    if (!validateStep1()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Send only the step 1 data to the signup endpoint
+      const signupData = {
+        firstName: step1Form.firstName,
+        lastName: step1Form.lastName,
+        email: step1Form.email,
+        password: step1Form.password,
+        // userLogo: step1Form.userLogo,
+      };
+
+      const response = await axios.post(`${API_URL}/auth/signup`, signupData);
+
+      // Store the userId for the second step
+      const userData = response.data as {
+        id: string;
+        accessToken: string;
+        refreshToken: string;
+      };
+      setUserId(userData.id);
+
+      // Store tokens
+      await AsyncStorage.setItem("accessToken", userData.accessToken);
+      await AsyncStorage.setItem("refreshToken", userData.refreshToken);
+      await AsyncStorage.setItem("userEmail", step1Form.email);
+
+      // Proceed to step 2
       setCurrentStep(2);
+    } catch (error: unknown) {
+      console.log(error);
+      let errorMessage = "Signup failed. Please try again.";
+
+      // Type assertion for axios error
+      const apiError = error as ApiError;
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      }
+
+      Alert.alert("Signup Error", errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -178,40 +222,44 @@ export default function SignupScreen() {
     }
   }, [response]);
 
-  // Handle final signup
-  const handleSignup = async () => {
+  // Handle final signup (step 2 submission)
+  const handleCompleteSignup = async () => {
     if (!validateStep2()) {
       return;
     }
 
+    // if (!userId) {
+    //   Alert.alert("Error", "User ID is missing. Please try again.");
+    //   setCurrentStep(1);
+    //   return;
+    // }
+
     setLoading(true);
     try {
-      // Combine data from both steps
-      const signupData: SignupData = {
-        userLogo: step1Form.userLogo,
-        firstName: step1Form.firstName,
-        lastName: step1Form.lastName,
-        email: step1Form.email,
-        password: step1Form.password,
-        phone: step2Form.phone,
+      // Send the step 2 data to the add-user-fields endpoint
+      const userData = {
+        phoneNumber: step2Form.phone,
         companyName: step2Form.companyName,
         address: {
-          streetAddress: step2Form.streetAddress,
-          streetAddressLine2: step2Form.streetAddressLine2,
+          streetLine1: step2Form.streetAddress,
+          streetLine2: step2Form.streetAddressLine2,
           city: step2Form.city,
-          postalCode: step2Form.postalCode,
+          postCode: step2Form.postalCode,
         },
       };
 
-      console.log(`${API_URL}/auth/signup`);
-      const response = await axios.post(`${API_URL}/auth/signup`, signupData);
+      // Get the stored token
+      const token = await AsyncStorage.getItem("accessToken");
 
-      // Type assertion for the response data
-      const responseData = response.data as AuthTokens;
+      if (!token) {
+        throw new Error("Authentication token is missing");
+      }
 
-      // Store tokens
-      await AsyncStorage.setItem("accessToken", responseData.accessToken);
-      await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
+      await axios.patch(`${API_URL}/auth/add-user-fields`, userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       // Store user profile data
       const userProfileData = {
@@ -233,15 +281,15 @@ export default function SignupScreen() {
         "userProfile",
         JSON.stringify(userProfileData),
       );
-      await AsyncStorage.setItem("userEmail", step1Form.email);
 
       // Signal authentication state change
       global.authStateChanged = true;
+      global.registrationCompleted = true;
 
       Alert.alert("Success", "Your account has been created successfully!");
     } catch (error: unknown) {
       console.log(error);
-      let errorMessage = "Signup failed. Please try again.";
+      let errorMessage = "Failed to save user information. Please try again.";
 
       // Type assertion for axios error
       const apiError = error as ApiError;
@@ -249,7 +297,7 @@ export default function SignupScreen() {
         errorMessage = apiError.response.data.message;
       }
 
-      Alert.alert("Signup Error", errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -334,11 +382,15 @@ export default function SignupScreen() {
           autoCapitalize="none"
         />
 
-        <CustomButton
-          title="Continue"
-          // icon="arrow-right"
-          onPress={handleNextStep}
-        />
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#fff"
+            style={{ marginTop: 16 }}
+          />
+        ) : (
+          <CustomButton title="Continue" onPress={handleNextStep} />
+        )}
 
         <Text style={styles.or}>OR</Text>
 
@@ -468,7 +520,10 @@ export default function SignupScreen() {
               style={{ marginTop: 16 }}
             />
           ) : (
-            <CustomButton title="Create Account" onPress={handleSignup} />
+            <CustomButton
+              title="Create Account"
+              onPress={handleCompleteSignup}
+            />
           )}
         </View>
       </View>
