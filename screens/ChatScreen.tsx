@@ -46,7 +46,7 @@ interface ChatMessage {
   [key: string]: any;
 }
 
-type ChatScreenRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>;
+type ChatScreenRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const OPENAI_API_KEY =
@@ -59,12 +59,14 @@ const ChatScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const flatListRef = useRef<FlatList<ChatMessage> | null>(null); // Reference to FlatList
   const route = useRoute<ChatScreenRouteProp>();
-  const carDetails = route.params?.carDetails || {} as Partial<CarDetails>;
+  const carDetails = route.params?.carDetails || ({} as Partial<CarDetails>);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]); // Stores all messages
+  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>(
+    [],
+  ); // Stores all messages
   const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [chatId, setChatId] = useState<string | null>(null);
-  const carName = `${carDetails?.Make || ''} ${carDetails?.Model || ''} - ${carDetails?.['Model Year'] || ''}`;
+  const [chatId, setChatId] = useState<string | null>("0SYzBsl57w2sDYRQHrEK");
+  const carName = `${carDetails?.Make || ""} ${carDetails?.Model || ""} - ${carDetails?.["Model Year"] || ""}`;
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
@@ -87,35 +89,38 @@ const ChatScreen = () => {
 
   // Voice recognition handlers
   const onSpeechStart = () => {
-    console.log('Speech recognition started');
+    console.log("Speech recognition started");
   };
 
   const onSpeechEnd = () => {
     setIsRecording(false);
-    console.log('Speech recognition ended');
+    console.log("Speech recognition ended");
   };
 
   const onSpeechResults = (e: any) => {
-    const text = e.value && e.value.length > 0 ? e.value[0] : '';
+    const text = e.value && e.value.length > 0 ? e.value[0] : "";
     setRecordedText(text);
     setInputText(text);
-    console.log('Speech results:', text);
+    console.log("Speech results:", text);
   };
 
   const onSpeechError = (e: any) => {
-    console.error('Speech recognition error:', e);
+    console.error("Speech recognition error:", e);
     setIsRecording(false);
-    Alert.alert('Speech Recognition Error', 'Please try again.');
+    Alert.alert("Speech Recognition Error", "Please try again.");
   };
 
   // Start recording
   const startRecording = async () => {
     try {
-      await Voice.start('en-US');
+      await Voice.start("en-US");
       setIsRecording(true);
     } catch (e) {
-      console.error('Error starting voice recognition:', e);
-      Alert.alert('Error', 'Could not start voice recording. Please try again.');
+      console.error("Error starting voice recognition:", e);
+      Alert.alert(
+        "Error",
+        "Could not start voice recording. Please try again.",
+      );
     }
   };
 
@@ -125,18 +130,21 @@ const ChatScreen = () => {
       await Voice.stop();
       setIsRecording(false);
     } catch (e) {
-      console.error('Error stopping voice recognition:', e);
+      console.error("Error stopping voice recognition:", e);
     }
   };
 
   // Image picker functions
   const takePhoto = async () => {
     setShowMediaOptions(false);
-    
+
     // Request camera permissions
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Camera permission is required to take photos.');
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Camera permission is required to take photos.",
+      );
       return;
     }
 
@@ -151,18 +159,21 @@ const ChatScreen = () => {
         await handleImageMessage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Could not take photo. Please try again.');
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Could not take photo. Please try again.");
     }
   };
 
   const pickImage = async () => {
     setShowMediaOptions(false);
-    
+
     // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Media library permission is required to select images.');
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Media library permission is required to select images.",
+      );
       return;
     }
 
@@ -177,8 +188,8 @@ const ChatScreen = () => {
         await handleImageMessage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Could not pick image. Please try again.');
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Could not pick image. Please try again.");
     }
   };
 
@@ -204,7 +215,7 @@ const ChatScreen = () => {
     // Store in Firebase (modify your addMessage function to handle image uploads if needed)
     try {
       await addMessage(chatId, "user", "Image", [imageUri]);
-      
+
       // Now send a follow-up typing indicator and get AI response
       setIsTyping(true);
       const typingMessage: ChatMessage = {
@@ -219,8 +230,9 @@ const ChatScreen = () => {
       setTimeout(async () => {
         try {
           // Create AI response for the image
-          const aiResponse = "I've received your image. Can you tell me more about what you're seeing?";
-          
+          const aiResponse =
+            "I've received your image. Can you tell me more about what you're seeing?";
+
           await addMessage(chatId, "CarTechAI", aiResponse);
 
           setMessages((prevMessages) => [
@@ -256,124 +268,140 @@ const ChatScreen = () => {
       if (!chatId && !route.params?.chatId) {
         const createdChatId = await createChat(carName);
         if (createdChatId) {
-          setChatId(createdChatId);
-  
+          setChatId("0SYzBsl57w2sDYRQHrEK");
+
           // First message from bot
           const firstMessage: ChatMessage = {
             id: Date.now().toString(),
             sender: "bot",
-            message: `Hello! I am CarTechAI. How can I assist you with your car:\n${carDetails?.Make || ''} ${carDetails?.Model || ''} - ${carDetails?.['Model Year'] || ''}?`,
+            message: `Hello! I am CarTechAI. How can I assist you with your car:\n${carDetails?.Make || ""} ${carDetails?.Model || ""} - ${carDetails?.["Model Year"] || ""}?`,
             timestamp: new Date(), // Optional: Firestore uses serverTimestamp() automatically
           };
-  
+
           // Save message to Firestore
-          const messageId = await addMessage(createdChatId, firstMessage.sender, firstMessage.message || '');
+          const messageId = await addMessage(
+            createdChatId,
+            firstMessage.sender,
+            firstMessage.message || "",
+          );
           if (messageId) {
             setMessages([{ ...firstMessage, id: messageId }]);
           }
         }
       } else if (route.params?.chatId) {
-        setChatId(route.params.chatId);
+        setChatId("0SYzBsl57w2sDYRQHrEK");
         const fetchedMessages = await getMessagesByChatId(route.params.chatId);
         if (fetchedMessages && Array.isArray(fetchedMessages)) {
           setMessages(fetchedMessages as ChatMessage[]);
         }
       }
     };
-  
+
     initChat();
   }, [chatId, route.params?.chatId]);
-  
 
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const renderItem = ({ item }: { item: ChatMessage }) => {
     // Get loading states for images and thumbnails
     const imageLoading = loadingStates[item.id] ?? true;
     const thumbnailLoading = loadingStates[item.id + "-thumbnail"] ?? true;
-  
+
     // Function to update loading state when images/thumbnails are loaded
     const handleImageLoad = (id: string) => {
       setLoadingStates((prev) => ({ ...prev, [id]: false }));
     };
-  
+
     // Regex patterns for detecting media and links
     const urlPattern = /(https?:\/\/[^\s]+)/g;
-    const imagePattern = /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|gif))(?=[\s)]|$)/i;
+    const imagePattern =
+      /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|gif))(?=[\s)]|$)/i;
     const pdfPattern = /(https?:\/\/[^\s)]+?\.pdf)(?=[\s)]|$)/i;
     const boldPattern = /\*\*(.*?)\*\*/g;
     const emojiPattern = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
-  
+
     // Process text for links, bold text, and images
-    const textWithMedia = (item.text || item.message || "").split(urlPattern).map((part: string, index: number) => {
-      if (imagePattern.test(part)) {
-        const match = part.match(imagePattern);
-        if (match) {
-          const cleanImageUrl = match[1];
+    const textWithMedia = (item.text || item.message || "")
+      .split(urlPattern)
+      .map((part: string, index: number) => {
+        if (imagePattern.test(part)) {
+          const match = part.match(imagePattern);
+          if (match) {
+            const cleanImageUrl = match[1];
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => Linking.openURL(cleanImageUrl)}
+              >
+                <View>
+                  {imageLoading && (
+                    <ActivityIndicator
+                      size="small"
+                      color="#00ff00"
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        zIndex: 1,
+                      }}
+                    />
+                  )}
+                  <Image
+                    source={{ uri: cleanImageUrl }}
+                    style={styles.chatImage}
+                    onLoad={() => handleImageLoad(item.id)} // Hide loader when image loads
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          }
+        } else if (pdfPattern.test(part)) {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => Linking.openURL(cleanImageUrl)}
+              style={styles.linkContainer}
+              onPress={() => Linking.openURL(part)}
             >
-              <View>
-                {imageLoading && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#00ff00"
-                    style={{ position: 'absolute', top: '50%', left: '50%', zIndex: 1 }}
-                  />
-                )}
-                <Image
-                  source={{ uri: cleanImageUrl }}
-                  style={styles.chatImage}
-                  onLoad={() => handleImageLoad(item.id)} // Hide loader when image loads
-                />
-              </View>
+              <Text style={[styles.link, styles.boldText]}>📄 Open PDF</Text>
             </TouchableOpacity>
           );
+        } else if (urlPattern.test(part)) {
+          return (
+            <TouchableOpacity
+              key={index}
+              style={styles.linkContainer}
+              onPress={() => Linking.openURL(part)}
+            >
+              <Text style={styles.link}>{part}</Text>
+            </TouchableOpacity>
+          );
+        } else if (boldPattern.test(part)) {
+          const boldText = part.replace(
+            boldPattern,
+            (_match: string, p1: string) => p1,
+          );
+          return (
+            <Text key={index} style={[styles.messageText, styles.boldText]}>
+              {boldText}
+            </Text>
+          );
+        } else if (emojiPattern.test(part)) {
+          return (
+            <Text key={index} style={styles.messageText}>
+              {part}
+            </Text>
+          );
         }
-      } else if (pdfPattern.test(part)) {
-        return (
-          <TouchableOpacity
-            key={index}
-            style={styles.linkContainer}
-            onPress={() => Linking.openURL(part)}
-          >
-            <Text style={[styles.link, styles.boldText]}>📄 Open PDF</Text>
-          </TouchableOpacity>
-        );
-      } else if (urlPattern.test(part)) {
-        return (
-          <TouchableOpacity
-            key={index}
-            style={styles.linkContainer}
-            onPress={() => Linking.openURL(part)}
-          >
-            <Text style={styles.link}>{part}</Text>
-          </TouchableOpacity>
-        );
-      } else if (boldPattern.test(part)) {
-        const boldText = part.replace(boldPattern, (_match: string, p1: string) => p1);
-        return (
-          <Text key={index} style={[styles.messageText, styles.boldText]}>
-            {boldText}
-          </Text>
-        );
-      } else if (emojiPattern.test(part)) {
+
         return (
           <Text key={index} style={styles.messageText}>
             {part}
           </Text>
         );
-      }
-  
-      return (
-        <Text key={index} style={styles.messageText}>
-          {part}
-        </Text>
-      );
-    });
-  
+      });
+
     return (
       <View
         style={[
@@ -383,7 +411,7 @@ const ChatScreen = () => {
       >
         {/* Render processed text with media */}
         {textWithMedia}
-  
+
         {/* Display YouTube video with clickable link and thumbnail */}
         {item.youtubeVideo && (
           <View style={styles.youtubeContainer}>
@@ -393,7 +421,7 @@ const ChatScreen = () => {
             >
               <Text style={styles.link}>▶ {item.youtubeVideo.title}</Text>
             </TouchableOpacity>
-  
+
             {/* Clickable YouTube Thumbnail with Loading Animation */}
             <TouchableOpacity
               onPress={() => Linking.openURL(item.youtubeVideo!.link)}
@@ -404,7 +432,12 @@ const ChatScreen = () => {
                   <ActivityIndicator
                     size="small"
                     color="#FF0000"
-                    style={{ position: 'absolute', top: '50%', left: '50%', zIndex: 1 }}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      zIndex: 1,
+                    }}
                   />
                 )}
                 <Image
@@ -420,7 +453,7 @@ const ChatScreen = () => {
             </TouchableOpacity>
           </View>
         )}
-  
+
         {/* Display images from SerpAPI with Loading Animation */}
         {item.images && item.images.length > 0 && (
           <View style={styles.imageContainer}>
@@ -434,7 +467,12 @@ const ChatScreen = () => {
                     <ActivityIndicator
                       size="small"
                       color="#00ff00"
-                      style={{ position: 'absolute', top: '50%', left: '50%', zIndex: 1 }}
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        zIndex: 1,
+                      }}
                     />
                   )}
                   <Image
@@ -524,7 +562,7 @@ const ChatScreen = () => {
                 { role: "user", content: inputText },
               ],
             }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -536,11 +574,11 @@ const ChatScreen = () => {
         let youtubeVideo = null;
 
         images = await fetchImagesFromSerpAPI(
-          `${inputText} ${carDetails?.Make || ''} ${carDetails?.Model || ''} ${carDetails?.['Model Year'] || ''} parts images or official diagrams`
+          `${inputText} ${carDetails?.Make || ""} ${carDetails?.Model || ""} ${carDetails?.["Model Year"] || ""} parts images or official diagrams`,
         );
 
         youtubeVideo = await fetchYoutubeVideosFromSerpAPI(
-          `${inputText} ${carDetails?.Make || ''} ${carDetails?.Model || ''} ${carDetails?.['Model Year'] || ''} videos`
+          `${inputText} ${carDetails?.Make || ""} ${carDetails?.Model || ""} ${carDetails?.["Model Year"] || ""} videos`,
         );
 
         console.log(carDetails);
@@ -548,7 +586,11 @@ const ChatScreen = () => {
         await addMessage(chatId, "CarTechAI", aiResponse, images, youtubeVideo);
 
         // Typewriter effect for AI response
-        const typeWriterEffect = (text: string, callback: (text: string) => void, completeCallback?: () => void) => {
+        const typeWriterEffect = (
+          text: string,
+          callback: (text: string) => void,
+          completeCallback?: () => void,
+        ) => {
           let index = 0;
           let typedText = "";
 
@@ -583,8 +625,8 @@ const ChatScreen = () => {
               prevMessages.map((msg, idx) =>
                 idx === prevMessages.length - 1
                   ? { ...msg, text: updatedText }
-                  : msg
-              )
+                  : msg,
+              ),
             );
           },
           () => {
@@ -592,17 +634,17 @@ const ChatScreen = () => {
               prevMessages.map((msg, idx) =>
                 idx === prevMessages.length - 1
                   ? { ...msg, images, youtubeVideo }
-                  : msg
-              )
+                  : msg,
+              ),
             );
-          }
+          },
         );
       } catch (error) {
         console.error("Error fetching AI response:", error);
         await addMessage(
           chatId,
           "CarTechAI",
-          "Error: Unable to get a response. Please try again."
+          "Error: Unable to get a response. Please try again.",
         );
 
         setMessages((prevMessages) => [
@@ -631,7 +673,7 @@ const ChatScreen = () => {
         query,
         carDetails?.Make,
         carDetails?.Model,
-        carDetails?.['Model Year'],
+        carDetails?.["Model Year"],
       ]
         .filter(Boolean)
         .join(" ");
@@ -639,7 +681,7 @@ const ChatScreen = () => {
       console.log(carDetails);
 
       const url = `https://serpapi.com/search.json?engine=youtube&search_query=${encodeURIComponent(
-        searchQuery
+        searchQuery,
       )}&gl=us&hl=en&api_key=${SERPAPI_KEY}`;
 
       const response = await fetch(url);
@@ -664,8 +706,8 @@ const ChatScreen = () => {
     try {
       const response = await fetch(
         `https://serpapi.com/search.json?q=${encodeURIComponent(
-          query
-        )}&location=United+States&hl=en&gl=us&google_domain=google.com&tbm=isch&api_key=${SERPAPI_KEY}`
+          query,
+        )}&location=United+States&hl=en&gl=us&google_domain=google.com&tbm=isch&api_key=${SERPAPI_KEY}`,
       );
       const data = await response.json();
       if (data.images_results && data.images_results.length > 0) {
@@ -698,10 +740,10 @@ const ChatScreen = () => {
           ref={flatListRef}
           data={messages}
           renderItem={({ item }) => (
-            <RenderChat 
-              item={item as any} 
-              loadingStates={loadingStates} 
-              setLoadingStates={setLoadingStates} 
+            <RenderChat
+              item={item as any}
+              loadingStates={loadingStates}
+              setLoadingStates={setLoadingStates}
             />
           )}
           keyExtractor={(item) => item.id}
@@ -714,13 +756,13 @@ const ChatScreen = () => {
         />
 
         <View style={styles.inputContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.attachButton}
             onPress={() => setShowMediaOptions(true)}
           >
             <Icon name="paperclip" type="feather" size={24} color="#fff" />
           </TouchableOpacity>
-          
+
           <TextInput
             style={styles.input}
             value={inputText}
@@ -728,17 +770,22 @@ const ChatScreen = () => {
             placeholder="Type your message..."
             placeholderTextColor="#aaa"
           />
-          
+
           {inputText.trim() ? (
             <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
               <Icon name="send" size={24} color="#fff" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity 
-              onPress={isRecording ? stopRecording : startRecording} 
+            <TouchableOpacity
+              onPress={isRecording ? stopRecording : startRecording}
               style={[styles.sendButton, isRecording && styles.recordingButton]}
             >
-              <Icon name="mic" type="feather" size={24} color={isRecording ? "#FF4444" : "#fff"} />
+              <Icon
+                name="mic"
+                type="feather"
+                size={24}
+                color={isRecording ? "#FF4444" : "#fff"}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -750,7 +797,7 @@ const ChatScreen = () => {
           animationType="slide"
           onRequestClose={() => setShowMediaOptions(false)}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
             onPress={() => setShowMediaOptions(false)}
@@ -760,17 +807,19 @@ const ChatScreen = () => {
                 <Icon name="camera" type="feather" size={24} color="#fff" />
                 <Text style={styles.modalOptionText}>Take Photo</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.modalOption} onPress={pickImage}>
                 <Icon name="image" type="feather" size={24} color="#fff" />
                 <Text style={styles.modalOptionText}>Choose from Gallery</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalOption, styles.cancelOption]} 
+
+              <TouchableOpacity
+                style={[styles.modalOption, styles.cancelOption]}
                 onPress={() => setShowMediaOptions(false)}
               >
-                <Text style={[styles.modalOptionText, styles.cancelText]}>Cancel</Text>
+                <Text style={[styles.modalOptionText, styles.cancelText]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
