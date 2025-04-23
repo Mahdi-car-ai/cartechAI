@@ -65,13 +65,14 @@ const ChatScreen = () => {
     [],
   ); // Stores all messages
   const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [chatId, setChatId] = useState<string | null>("0SYzBsl57w2sDYRQHrEK");
+  const [chatId, setChatId] = useState<string | null>(null);
   const carName = `${carDetails?.Make || ""} ${carDetails?.Model || ""} - ${carDetails?.["Model Year"] || ""}`;
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedText, setRecordedText] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Initialization for voice recognition
   useEffect(() => {
@@ -156,7 +157,7 @@ const ChatScreen = () => {
       });
 
       if (!result.canceled) {
-        await handleImageMessage(result.assets[0].uri);
+        setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
       console.error("Error taking photo:", error);
@@ -185,7 +186,7 @@ const ChatScreen = () => {
       });
 
       if (!result.canceled) {
-        await handleImageMessage(result.assets[0].uri);
+        setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -194,16 +195,16 @@ const ChatScreen = () => {
   };
 
   // Handle sending image message
-  const handleImageMessage = async (imageUri: string) => {
+  const handleImageMessage = async (imageUri: string, text: string) => {
     if (!chatId) {
       console.error("Chat ID is missing. Cannot store messages.");
       return;
     }
 
-    // Create a message with the image
+    // Create a message with the image and text
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
-      text: "Image",
+      text: text || "Image",
       sender: "user",
       images: [imageUri],
     };
@@ -214,8 +215,8 @@ const ChatScreen = () => {
 
     // Store in Firebase (modify your addMessage function to handle image uploads if needed)
     try {
-      await addMessage(chatId, "user", "Image", [imageUri]);
-
+      await addMessage(chatId, "user", text || "Image", [imageUri]);
+      
       // Now send a follow-up typing indicator and get AI response
       setIsTyping(true);
       const typingMessage: ChatMessage = {
@@ -232,7 +233,7 @@ const ChatScreen = () => {
           // Create AI response for the image
           const aiResponse =
             "I've received your image. Can you tell me more about what you're seeing?";
-
+          
           await addMessage(chatId, "CarTechAI", aiResponse);
 
           setMessages((prevMessages) => [
@@ -268,7 +269,7 @@ const ChatScreen = () => {
       if (!chatId && !route.params?.chatId) {
         const createdChatId = await createChat(carName);
         if (createdChatId) {
-          setChatId("0SYzBsl57w2sDYRQHrEK");
+          setChatId(createdChatId);
 
           // First message from bot
           const firstMessage: ChatMessage = {
@@ -289,7 +290,7 @@ const ChatScreen = () => {
           }
         }
       } else if (route.params?.chatId) {
-        setChatId("0SYzBsl57w2sDYRQHrEK");
+        setChatId(route.params?.chatId);
         const fetchedMessages = await getMessagesByChatId(route.params.chatId);
         if (fetchedMessages && Array.isArray(fetchedMessages)) {
           setMessages(fetchedMessages as ChatMessage[]);
@@ -498,8 +499,17 @@ const ChatScreen = () => {
   };
 
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    if ((!inputText.trim() && !selectedImage)) return;
 
+    if (selectedImage) {
+      // If we have an image, send it with the text
+      await handleImageMessage(selectedImage, inputText);
+      setSelectedImage(null);
+      setInputText("");
+      return;
+    }
+
+    // If no image, just send text as usual
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       text: inputText,
@@ -755,6 +765,18 @@ const ChatScreen = () => {
           keyboardShouldPersistTaps="handled"
         />
 
+        {selectedImage && (
+          <View style={styles.selectedImageContainer}>
+            <Image source={{ uri: selectedImage }} style={styles.selectedImagePreview} />
+            <TouchableOpacity 
+              style={styles.removeImageButton}
+              onPress={() => setSelectedImage(null)}
+            >
+              <Icon name="x" type="feather" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.attachButton}
@@ -764,14 +786,14 @@ const ChatScreen = () => {
           </TouchableOpacity>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, selectedImage && styles.inputWithImage]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Type your message..."
+            placeholder={selectedImage ? "Add a caption..." : "Type your message..."}
             placeholderTextColor="#aaa"
           />
 
-          {inputText.trim() ? (
+          {inputText.trim() || selectedImage ? (
             <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
               <Icon name="send" size={24} color="#fff" />
             </TouchableOpacity>
@@ -984,6 +1006,10 @@ const styles = StyleSheet.create({
     fontFamily: "Aeonik",
     fontSize: 16,
   },
+  inputWithImage: {
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
   attachButton: {
     padding: 12,
     position: "absolute",
@@ -1034,6 +1060,31 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     marginLeft: 0,
+  },
+  selectedImageContainer: {
+    width: "100%",
+    backgroundColor: "#333",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    position: "relative",
+  },
+  selectedImagePreview: {
+    height: 100,
+    width: "100%",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    resizeMode: "contain",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
