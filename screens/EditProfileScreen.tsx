@@ -13,6 +13,7 @@ import {
   Image,
   ActivityIndicator,
   useColorScheme,
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -42,7 +43,11 @@ interface EditProfileForm {
   streetAddressLine2: string;
   city: string;
   postalCode: string;
-  password: string;
+}
+
+interface PasswordChangeForm {
+  oldPassword: string;
+  newPassword: string;
   confirmPassword: string;
 }
 
@@ -50,6 +55,8 @@ export default function EditProfileScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const width = useWindowDimensions().width * 0.9;
   const colorScheme = useColorScheme();
   const iconColor = Colors[colorScheme ?? "light"].icon;
@@ -66,7 +73,12 @@ export default function EditProfileScreen() {
     streetAddressLine2: "",
     city: "",
     postalCode: "",
-    password: "",
+  });
+
+  // Password change form state
+  const [passwordForm, setPasswordForm] = useState<PasswordChangeForm>({
+    oldPassword: "",
+    newPassword: "",
     confirmPassword: "",
   });
 
@@ -93,8 +105,6 @@ export default function EditProfileScreen() {
           streetAddressLine2: userProfile.address?.streetAddressLine2 || "",
           city: userProfile.address?.city || "",
           postalCode: userProfile.address?.postalCode || "",
-          password: "",
-          confirmPassword: "",
         });
       }
     } catch (error) {
@@ -129,7 +139,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  // Validation
+  // Validation for profile form
   const validateForm = () => {
     if (!formData.firstName.trim()) {
       Alert.alert("Invalid Input", "Please enter your first name");
@@ -153,22 +163,6 @@ export default function EditProfileScreen() {
       return false;
     }
 
-    // Validate password only if both password fields have input
-    if (formData.password || formData.confirmPassword) {
-      if (formData.password.length < 6) {
-        Alert.alert(
-          "Invalid Password",
-          "Password must be at least 6 characters long",
-        );
-        return false;
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        Alert.alert("Password Mismatch", "Passwords do not match");
-        return false;
-      }
-    }
-
     // Only validate phone if it's not empty
     if (formData.phone.trim()) {
       const phoneRegex = /^\+?[0-9]{8,15}$/;
@@ -176,6 +170,34 @@ export default function EditProfileScreen() {
         Alert.alert("Invalid Phone", "Please enter a valid phone number");
         return false;
       }
+    }
+
+    return true;
+  };
+
+  // Validation for password change
+  const validatePasswordForm = () => {
+    if (!passwordForm.oldPassword) {
+      Alert.alert("Invalid Input", "Please enter your current password");
+      return false;
+    }
+
+    if (!passwordForm.newPassword) {
+      Alert.alert("Invalid Input", "Please enter your new password");
+      return false;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      Alert.alert(
+        "Invalid Password",
+        "New password must be at least 6 characters long"
+      );
+      return false;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      Alert.alert("Password Mismatch", "New passwords do not match");
+      return false;
     }
 
     return true;
@@ -206,29 +228,11 @@ export default function EditProfileScreen() {
       };
 
       // Optional: Send update to backend
-      // Uncomment this when backend API is ready
-      /*
       const accessToken = await AsyncStorage.getItem("accessToken");
       if (accessToken) {
         await axios.put(`${API_URL}/users/profile`, updateData, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
-      }
-      */
-
-      // Include password in update if provided
-      if (formData.password) {
-        // Optional: Update password on backend
-        // Uncomment this when backend API is ready
-        /*
-        if (accessToken) {
-          await axios.post(`${API_URL}/users/change-password`, {
-            password: formData.password
-          }, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-        }
-        */
       }
 
       // Update local storage
@@ -251,6 +255,55 @@ export default function EditProfileScreen() {
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("Authentication required");
+      }
+
+      await axios.post(
+        `${API_URL}/auth/change-password`,
+        {
+          oldPassword: passwordForm.oldPassword,
+          newPassword: passwordForm.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      // Reset form and close modal
+      setPasswordForm({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowPasswordModal(false);
+
+      Alert.alert("Success", "Your password has been changed successfully");
+    } catch (error: unknown) {
+      console.error("Error changing password:", error);
+
+      const apiError = error as ApiError;
+      let errorMessage = "Failed to change password. Please try again.";
+
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      }
+
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -347,31 +400,13 @@ export default function EditProfileScreen() {
               autoCapitalize="none"
             />
 
-            <Text style={styles.sectionTitle}>Change Password (Optional)</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="New Password"
-              placeholderTextColor="#aaa"
-              value={formData.password}
-              onChangeText={(text) =>
-                setFormData({ ...formData, password: text })
-              }
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm New Password"
-              placeholderTextColor="#aaa"
-              value={formData.confirmPassword}
-              onChangeText={(text) =>
-                setFormData({ ...formData, confirmPassword: text })
-              }
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <TouchableOpacity 
+              style={styles.changePasswordButton}
+              onPress={() => setShowPasswordModal(true)}
+            >
+              <Text style={styles.changePasswordText}>Change Password</Text>
+              <FontAwesome name="lock" size={16} color="#fff" />
+            </TouchableOpacity>
 
             <Text style={styles.sectionTitle}>Contact Information</Text>
 
@@ -456,6 +491,86 @@ export default function EditProfileScreen() {
             )}
           </View>
         </ScrollView>
+
+        {/* Password Change Modal */}
+        <Modal
+          visible={showPasswordModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowPasswordModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Change Password</Text>
+                <TouchableOpacity 
+                  style={styles.modalCloseButton}
+                  onPress={() => setShowPasswordModal(false)}
+                >
+                  <FontAwesome name="times" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Current Password"
+                placeholderTextColor="#888"
+                value={passwordForm.oldPassword}
+                onChangeText={(text) =>
+                  setPasswordForm({ ...passwordForm, oldPassword: text })
+                }
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="New Password"
+                placeholderTextColor="#888"
+                value={passwordForm.newPassword}
+                onChangeText={(text) =>
+                  setPasswordForm({ ...passwordForm, newPassword: text })
+                }
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Confirm New Password"
+                placeholderTextColor="#888"
+                value={passwordForm.confirmPassword}
+                onChangeText={(text) =>
+                  setPasswordForm({ ...passwordForm, confirmPassword: text })
+                }
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              
+              <View style={styles.modalButtonsContainer}>
+                {passwordLoading ? (
+                  <ActivityIndicator size="large" color="#95ff77" />
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={() => setShowPasswordModal(false)}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.submitButton]}
+                      onPress={handleChangePassword}
+                    >
+                      <Text style={styles.submitButtonText}>Change Password</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -546,5 +661,107 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
+  },
+  changePasswordButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2a2e2e",
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 16,
+    width: "100%",
+  },
+  changePasswordText: {
+    color: "#fff",
+    fontFamily: "Aeonik",
+    fontSize: 16,
+    marginRight: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: "#2a2e2e",
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: "#444",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: "Aeonik",
+    color: "#fff",
+    textAlign: "center",
+    flex: 1,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalInput: {
+    width: "100%",
+    fontSize: 16,
+    fontFamily: "Aeonik",
+    backgroundColor: "#1a1c1b",
+    color: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#444",
+  },
+  modalButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginHorizontal: 6,
+  },
+  cancelButton: {
+    backgroundColor: "#444",
+    borderWidth: 1,
+    borderColor: "#555",
+  },
+  submitButton: {
+    backgroundColor: "#95ff77",
+  },
+  cancelButtonText: {
+    fontFamily: "Aeonik",
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "500",
+  },
+  submitButtonText: {
+    fontFamily: "Aeonik",
+    fontSize: 16,
+    color: "#1a1c1b",
+    fontWeight: "600",
   },
 });
