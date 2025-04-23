@@ -68,7 +68,9 @@ const categorizeChats = (chats: Chat[]): CategorizedChats => {
     const chatDate = chat.created_at.toDate();
     chatDate.setHours(0, 0, 0, 0);
 
-    const diffInDays = Math.floor((today.getTime() - chatDate.getTime()) / (1000 * 60 * 60 * 24));
+    const diffInDays = Math.floor(
+      (today.getTime() - chatDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     if (diffInDays === 0) {
       categorizedChats.Today.push(chat);
@@ -185,6 +187,7 @@ const CustomDrawer = (props: DrawerProps) => {
   return (
     <View style={styles.container}>
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={Object.entries(categorizedChats)}
         keyExtractor={([title]) => title}
         ListHeaderComponent={renderHeader}

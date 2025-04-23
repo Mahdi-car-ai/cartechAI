@@ -22,6 +22,7 @@ import { Image } from "react-native";
 import Logo from "@/components/ui/Logo";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthTokens, ApiError } from "@/types/auth";
 
 declare global {
   var authStateChanged: boolean;
@@ -33,20 +34,8 @@ const API_URL = "http://localhost:4000";
 
 type RootStackParamList = {
   Login: undefined;
+  Signup: undefined;
 };
-
-interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
-
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 export default function LoginScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -93,7 +82,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
 
       reloadApp();
-    } catch (error) {
+    } catch (error: unknown) {
       console.log(error);
       let errorMessage = "Signup failed. Please try again.";
       
@@ -125,13 +114,32 @@ export default function LoginScreen() {
         password,
       });
 
-      const responseData = response.data as AuthTokens;
+      const responseData = response.data as AuthTokens & { user?: any };
       
       await AsyncStorage.setItem("accessToken", responseData.accessToken);
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
+      await AsyncStorage.setItem("userEmail", email);
+      
+      // Create a basic user profile if it doesn't exist
+      const existingProfile = await AsyncStorage.getItem("userProfile");
+      if (!existingProfile) {
+        // If response contains user data, use it
+        if (responseData.user) {
+          await AsyncStorage.setItem("userProfile", JSON.stringify(responseData.user));
+        } else {
+          // Create minimal profile with email only
+          const basicProfile = {
+            firstName: "User",
+            lastName: "",
+            email: email,
+            userLogo: ""
+          };
+          await AsyncStorage.setItem("userProfile", JSON.stringify(basicProfile));
+        }
+      }
 
       reloadApp();
-    } catch (error) {
+    } catch (error: unknown) {
       console.log(error);
       let errorMessage = "Login failed. Please try again.";
       
@@ -184,7 +192,7 @@ export default function LoginScreen() {
     checkAuthStatus();
   }, []);
 
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, _] = useState(true);
 
   return (
     <KeyboardAvoidingView
@@ -289,13 +297,11 @@ export default function LoginScreen() {
               Continue with Apple
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+          <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
             <Text
               style={{ color: "#fff", marginTop: 16, fontFamily: "Aeonik" }}
             >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Login"}
+              Don't have an account? Sign up
             </Text>
           </TouchableOpacity>
         </ScrollView>

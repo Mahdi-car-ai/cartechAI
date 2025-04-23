@@ -6,10 +6,7 @@ import {
   StatusBar,
   Dimensions,
 } from "react-native";
-import {
-  NavigationContainer,
-  useFocusEffect,
-} from "@react-navigation/native";
+import { NavigationContainer, useFocusEffect } from "@react-navigation/native";
 import {
   createDrawerNavigator,
   DrawerToggleButton,
@@ -20,6 +17,8 @@ import CarDetailsScreen from "../screens/CarDetailsScreen";
 import ChatScreen from "@/screens/ChatScreen";
 import EnterCarDetailsScreen from "@/screens/EnterCarDetails";
 import LoginScreen from "@/screens/LoginScreen";
+import SignupScreen from "@/screens/SignupScreen";
+import EditProfileScreen from "@/screens/EditProfileScreen";
 import CustomDrawer from "@/components/CustomDrawer";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
@@ -43,20 +42,24 @@ SplashScreen.preventAutoHideAsync();
 interface ScreenWithDrawerProps {
   component: React.ComponentType<any>;
   navigation: any;
+  hideDrawerButton?: boolean;
 }
 
 const ScreenWithDrawer = ({
   component: Component,
   navigation,
+  hideDrawerButton = false,
 }: ScreenWithDrawerProps) => {
   const isDrawerOpen = useDrawerStatus() === "open";
 
   return (
     <View style={styles.container}>
-      {/* Always show the DrawerToggleButton */}
-      <View style={styles.drawerButton}>
-        <DrawerToggleButton tintColor="white" />
-      </View>
+      {/* Show the DrawerToggleButton only if not hidden */}
+      {!hideDrawerButton && (
+        <View style={styles.drawerButton}>
+          <DrawerToggleButton tintColor="white" />
+        </View>
+      )}
       <Component navigation={navigation} />
     </View>
   );
@@ -74,7 +77,7 @@ const Layout = () => {
     Robit: require("../assets/fonts/robit.otf"),
     Aeonik: require("../assets/fonts/Aeonik-Regular.ttf"),
   });
-  
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -111,13 +114,13 @@ const Layout = () => {
     const interval = setInterval(() => {
       // If global auth state flag is set, force a re-render by updating authVersion
       if (global.authStateChanged) {
-        setAuthVersion(prev => prev + 1);
+        setAuthVersion((prev) => prev + 1);
       } else {
         // Otherwise just check normally
         checkAuthStatus();
       }
     }, 2000);
-    
+
     return () => clearInterval(interval);
   }, [checkAuthStatus]);
 
@@ -177,6 +180,14 @@ const Layout = () => {
             {(props) => <ScreenWithDrawer {...props} component={UserScreen} />}
           </Drawer.Screen>
           <Drawer.Screen
+            name="EditProfile"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={EditProfileScreen} hideDrawerButton />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
             name="ChatScreen"
             options={{ drawerItemStyle: { display: "none" } }}
           >
@@ -202,6 +213,7 @@ const Layout = () => {
       ) : (
         <Drawer.Navigator screenOptions={{ headerShown: false }}>
           <Drawer.Screen name="Login" component={LoginScreen} />
+          <Drawer.Screen name="Signup" component={SignupScreen} />
         </Drawer.Navigator>
       )}
     </>

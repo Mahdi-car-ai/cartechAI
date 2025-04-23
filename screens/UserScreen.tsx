@@ -16,6 +16,8 @@ import Logo from "@/components/ui/Logo";
 import CustomButton from "@/components/Button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { ApiError, UserProfile } from "@/types/auth";
+import { FontAwesome } from "@expo/vector-icons";
 
 // Add the type declaration for the global var
 declare global {
@@ -32,10 +34,15 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function UserScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const [userEmail, setUserEmail] = useState<string>("");
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    userLogo: "",
+    phone: "",
+  });
   const [loading, setLoading] = useState(false);
 
-  // Fetch user info on component mount
   useEffect(() => {
     fetchUserInfo();
   }, []);
@@ -45,9 +52,22 @@ export default function UserScreen() {
       const accessToken = await AsyncStorage.getItem("accessToken");
 
       if (accessToken) {
-        // For now, we'll just use any stored user email or a placeholder
-        const email = await AsyncStorage.getItem("userEmail");
-        setUserEmail(email || "User");
+        // Try to get user profile from AsyncStorage
+        const profileData = await AsyncStorage.getItem("userProfile");
+
+        if (profileData) {
+          // Use stored profile data
+          setUserProfile(JSON.parse(profileData));
+        } else {
+          // Fallback to just email if no profile data
+          const email = (await AsyncStorage.getItem("userEmail")) || "User";
+          setUserProfile({
+            firstName: "User",
+            lastName: "",
+            email: email,
+            userLogo: "",
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching user info:", error);
@@ -60,11 +80,11 @@ export default function UserScreen() {
       await AsyncStorage.removeItem("accessToken");
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("userEmail");
+      await AsyncStorage.removeItem("userProfile");
 
       // Signal authentication state change
       global.authStateChanged = true;
 
-      // Alert user of successful logout
       Alert.alert("Success", "You have been logged out successfully", [
         {
           text: "OK",
@@ -74,9 +94,17 @@ export default function UserScreen() {
           },
         },
       ]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Logout error:", error);
-      Alert.alert("Error", "Failed to log out. Please try again.");
+
+      const apiError = error as ApiError;
+      let errorMessage = "Failed to log out. Please try again.";
+
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      }
+
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -87,13 +115,38 @@ export default function UserScreen() {
       <View style={styles.container}>
         <Logo />
         <View style={styles.profileSection}>
-          <Image
-            source={{
-              uri: "https://avatar.iran.liara.run/public/boy?username=Ash",
-            }}
-            style={styles.profileImage}
-          />
-          <Text style={styles.profileName}>{userEmail}</Text>
+          {userProfile.userLogo ? (
+            <Image
+              source={{ uri: userProfile.userLogo }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Image
+              source={{
+                uri: "https://avatar.iran.liara.run/public/boy?username=Ash",
+              }}
+              style={styles.profileImage}
+            />
+          )}
+
+          <Text style={styles.profileName}>
+            {userProfile.firstName} {userProfile.lastName}
+          </Text>
+          <Text style={styles.profileEmail}>{userProfile.email}</Text>
+
+          {userProfile.phone && (
+            <Text style={styles.profileDetail}>
+              <FontAwesome name="phone" size={14} color="#888" />
+              {userProfile.phone}
+            </Text>
+          )}
+
+          {userProfile.companyName && (
+            <Text style={styles.profileDetail}>
+              <FontAwesome name="building" size={14} color="#888" />{" "}
+              {userProfile.companyName}
+            </Text>
+          )}
         </View>
 
         <CustomButton
@@ -142,11 +195,21 @@ const styles = StyleSheet.create({
   profileSection: {
     alignItems: "center",
     marginVertical: 32,
+    width: "80%",
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
+    marginBottom: 16,
+  },
+  profileImagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#2a2e2e",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   profileName: {
@@ -161,5 +224,13 @@ const styles = StyleSheet.create({
     fontFamily: "Aeonik",
     color: "#888",
     textAlign: "center",
+    marginBottom: 16,
+  },
+  profileDetail: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#aaa",
+    textAlign: "center",
+    marginTop: 4,
   },
 });
