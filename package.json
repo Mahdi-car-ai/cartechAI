@@ -1,7 +1,7 @@
 {
-  "name": "CarTechAI",
+  "name": "cartechai",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -31,6 +31,7 @@
     "expo-auth-session": "~6.0.3",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.5",
+    "expo-dev-client": "~5.0.20",
     "expo-font": "~13.0.3",
     "expo-haptics": "~14.0.1",
     "expo-image-picker": "^16.0.6",
@@ -54,8 +55,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5",
-    "expo-dev-client": "~5.0.20"
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

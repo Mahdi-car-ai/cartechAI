@@ -10,26 +10,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cartechga.cartechai",
-      "infoPlist": {
-        "NSCameraUsageDescription": "This app needs access to your camera to take photos of car issues for diagnostics.",
-        "NSMicrophoneUsageDescription": "This app needs access to your microphone to record voice messages and convert speech to text.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload images of car issues for diagnostics."
-      }
+      "bundleIdentifier": "com.cartechga.cartechai"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.cartechga.cartechai",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "package": "com.cartechga.cartechai"
     },
     "web": {
       "bundler": "metro",
@@ -45,13 +33,6 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "This app needs access to your photo library to upload images of car issues for diagnostics.",
-          "cameraPermission": "This app needs access to your camera to take photos of car issues for diagnostics."
         }
       ]
     ],
