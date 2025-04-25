@@ -22,14 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.cartechga.cartechai",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "package": "com.cartechga.cartechai"
     },
     "web": {
       "bundler": "metro",
@@ -53,6 +46,15 @@
           "photosPermission": "This app needs access to your photo library to upload images of car issues for diagnostics.",
           "cameraPermission": "This app needs access to your camera to take photos of car issues for diagnostics."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
       ]
     ],
     "experiments": {
@@ -65,6 +67,9 @@
       "eas": {
         "projectId": "b2cdee24-aae4-4cd4-90cc-96cec6325ca7"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b2cdee24-aae4-4cd4-90cc-96cec6325ca7"
     }
   }
 }

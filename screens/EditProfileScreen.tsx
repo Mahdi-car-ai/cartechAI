@@ -25,6 +25,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserProfile, ApiError } from "@/types/auth";
 import { Colors } from "@/constants/Colors";
+import KotlinVersionFix from "@/components/KotlinVersionFix";
 
 const API_URL = "http://localhost:4000";
 
