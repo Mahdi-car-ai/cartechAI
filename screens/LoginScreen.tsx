@@ -39,8 +39,8 @@ type RootStackParamList = {
 
 export default function LoginScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("jkdumpkj2@gmail.com");
+  const [password, setPassword] = useState("jkdumpkj@gmail.com");
   const [loading, setLoading] = useState(false);
   const width = useWindowDimensions().width * 0.9;
 
@@ -68,7 +68,7 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
- 
+
     console.log(`${API_URL}/auth/signup`);
     try {
       const response = await axios.post(`${API_URL}/auth/signup`, {
@@ -77,7 +77,7 @@ export default function LoginScreen() {
       });
 
       const responseData = response.data as AuthTokens;
-      
+
       await AsyncStorage.setItem("accessToken", responseData.accessToken);
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
 
@@ -85,14 +85,12 @@ export default function LoginScreen() {
     } catch (error: unknown) {
       console.log(error);
       let errorMessage = "Signup failed. Please try again.";
-      
+
       const apiError = error as ApiError;
-      if (
-        apiError.response?.data?.message
-      ) {
+      if (apiError.response?.data?.message) {
         errorMessage = apiError.response.data.message;
       }
-      
+
       Alert.alert("Signup Error", errorMessage);
     } finally {
       setLoading(false);
@@ -115,26 +113,32 @@ export default function LoginScreen() {
       });
 
       const responseData = response.data as AuthTokens & { user?: any };
-      
+
       await AsyncStorage.setItem("accessToken", responseData.accessToken);
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
       await AsyncStorage.setItem("userEmail", email);
-      
+
       // Create a basic user profile if it doesn't exist
       const existingProfile = await AsyncStorage.getItem("userProfile");
       if (!existingProfile) {
         // If response contains user data, use it
         if (responseData.user) {
-          await AsyncStorage.setItem("userProfile", JSON.stringify(responseData.user));
+          await AsyncStorage.setItem(
+            "userProfile",
+            JSON.stringify(responseData.user),
+          );
         } else {
           // Create minimal profile with email only
           const basicProfile = {
             firstName: "User",
             lastName: "",
             email: email,
-            userLogo: ""
+            userLogo: "",
           };
-          await AsyncStorage.setItem("userProfile", JSON.stringify(basicProfile));
+          await AsyncStorage.setItem(
+            "userProfile",
+            JSON.stringify(basicProfile),
+          );
         }
       }
 
@@ -142,14 +146,12 @@ export default function LoginScreen() {
     } catch (error: unknown) {
       console.log(error);
       let errorMessage = "Login failed. Please try again.";
-      
+
       const apiError = error as ApiError;
-      if (
-        apiError.response?.data?.message
-      ) {
+      if (apiError.response?.data?.message) {
         errorMessage = apiError.response.data.message;
       }
-      
+
       Alert.alert("Login Error", errorMessage);
     } finally {
       setLoading(false);
@@ -159,19 +161,15 @@ export default function LoginScreen() {
   const reloadApp = async () => {
     try {
       global.authStateChanged = true;
-      
-      Alert.alert(
-        "Success", 
-        "Login successful!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              console.log("Login successful, app will update");
-            }
-          }
-        ]
-      );
+
+      Alert.alert("Success", "Login successful!", [
+        {
+          text: "OK",
+          onPress: () => {
+            console.log("Login successful, app will update");
+          },
+        },
+      ]);
     } catch (error) {
       console.error("Error after login:", error);
     }
@@ -188,7 +186,7 @@ export default function LoginScreen() {
         console.log("Error checking auth status:", error);
       }
     };
-    
+
     checkAuthStatus();
   }, []);
 
