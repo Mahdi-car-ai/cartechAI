@@ -34,6 +34,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Allow CarteChai to access the microphone",
+          "speechRecognitionPermission": "Allow CarteChai to securely recognize user speech"
+        }
       ]
     ],
     "experiments": {
