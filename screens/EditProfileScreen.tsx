@@ -21,10 +21,11 @@ import CustomButton from "@/components/Button";
 import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Logo from "@/components/ui/Logo";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserProfile, ApiError } from "@/types/auth";
 import { Colors } from "@/constants/Colors";
+import api from "@/services/api";
+import { updateProfile as updateUserProfile } from "@/services/authService";
 
 const API_URL = "http://localhost:4000";
 
@@ -217,7 +218,7 @@ export default function EditProfileScreen() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        userLogo: formData.userLogo,
+        // userLogo: formData.userLogo,
         phoneNumber: formData.phoneNumber,
         companyName: formData.companyName,
         address: {
@@ -228,22 +229,17 @@ export default function EditProfileScreen() {
         },
       };
 
-      // Optional: Send update to backend
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      console.log(accessToken, "updateData");
-      if (accessToken) {
-        await axios.patch(`${API_URL}/users`, updateData, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+      // Use the API utility that handles token refresh
+      const success = await updateUserProfile(updateData);
+
+      if (success) {
+        await AsyncStorage.setItem("userProfile", JSON.stringify(updateData));
+        Alert.alert("Success", "Your profile has been updated successfully", [
+          { text: "OK", onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Alert.alert("Error", "Failed to update profile. Please try again.");
       }
-
-      // Update local storage
-      await AsyncStorage.setItem("userProfile", JSON.stringify(updateData));
-      await AsyncStorage.setItem("userEmail", formData.email);
-
-      Alert.alert("Success", "Your profile has been updated successfully", [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
     } catch (error: unknown) {
       console.error("Error updating profile:", error);
 
@@ -268,21 +264,11 @@ export default function EditProfileScreen() {
 
     setPasswordLoading(true);
     try {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("Authentication required");
-      }
-
-      await axios.post(
-        `${API_URL}/auth/change-password`,
-        {
-          oldPassword: passwordForm.oldPassword,
-          newPassword: passwordForm.newPassword,
-        },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      );
+      // Use the API utility that handles token refresh
+      await api.post("/auth/change-password", {
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+      });
 
       // Reset form and close modal
       setPasswordForm({
