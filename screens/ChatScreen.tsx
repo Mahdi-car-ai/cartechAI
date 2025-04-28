@@ -216,7 +216,7 @@ const ChatScreen = () => {
     // Store in Firebase (modify your addMessage function to handle image uploads if needed)
     try {
       await addMessage(chatId, "user", text || "Image", [imageUri]);
-      
+
       // Now send a follow-up typing indicator and get AI response
       setIsTyping(true);
       const typingMessage: ChatMessage = {
@@ -233,7 +233,7 @@ const ChatScreen = () => {
           // Create AI response for the image
           const aiResponse =
             "I've received your image. Can you tell me more about what you're seeing?";
-          
+
           await addMessage(chatId, "CarTechAI", aiResponse);
 
           setMessages((prevMessages) => [
@@ -499,7 +499,7 @@ const ChatScreen = () => {
   };
 
   const handleSend = async () => {
-    if ((!inputText.trim() && !selectedImage)) return;
+    if (!inputText.trim() && !selectedImage) return;
 
     if (selectedImage) {
       // If we have an image, send it with the text
@@ -767,8 +767,11 @@ const ChatScreen = () => {
 
         {selectedImage && (
           <View style={styles.selectedImageContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.selectedImagePreview} />
-            <TouchableOpacity 
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.selectedImagePreview}
+            />
+            <TouchableOpacity
               style={styles.removeImageButton}
               onPress={() => setSelectedImage(null)}
             >
@@ -789,11 +792,13 @@ const ChatScreen = () => {
             style={[styles.input, selectedImage && styles.inputWithImage]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder={selectedImage ? "Add a caption..." : "Type your message..."}
+            placeholder={
+              selectedImage ? "Add a caption..." : "Type your message..."
+            }
             placeholderTextColor="#aaa"
           />
 
-          {inputText.trim() || selectedImage ? (
+          {!isRecording && inputText.trim() ? (
             <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
               <Icon name="send" size={24} color="#fff" />
             </TouchableOpacity>

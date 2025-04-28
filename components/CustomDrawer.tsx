@@ -7,6 +7,7 @@ import {
   Image,
   FlatList,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useNavigation, DrawerActions } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -103,11 +104,33 @@ interface DrawerProps {
 const CustomDrawer = (props: DrawerProps) => {
   const navigation = useNavigation<NavigationProp>();
   const auth = getAuth(app);
-  const user = auth.currentUser;
+  const [user, setUser] = useState<any>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const userProfileData = await AsyncStorage.getItem("userProfile");
+        if (userProfileData) {
+          setUser(JSON.parse(userProfileData));
+        } else {
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            await AsyncStorage.setItem("userProfile", JSON.stringify({
+              email: currentUser.email,
+              photoURL: currentUser.photoURL
+            }));
+            setUser(currentUser);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user profile:", error);
+      }
+    };
+
+    loadUserProfile();
+    
     const fetchChats = async () => {
       const fetchedChats = await getChats();
       setChats(fetchedChats as Chat[]);

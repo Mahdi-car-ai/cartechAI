@@ -12,7 +12,7 @@ export interface SignupFormStep1 {
 }
 
 export interface SignupFormStep2 {
-  phone: string;
+  phoneNumber: string;
   companyName: string;
   streetAddress: string;
   streetAddressLine2: string;
@@ -39,7 +39,7 @@ export interface SignupData {
   lastName: string;
   email: string;
   password: string;
-  phone: string;
+  phoneNumber: string;
   companyName?: string;
   address?: {
     streetAddress?: string;
@@ -55,7 +55,7 @@ export interface UserProfile {
   lastName: string;
   email: string;
   userLogo?: string;
-  phone?: string;
+  phoneNumber?: string;
   companyName?: string;
   address?: {
     streetAddress?: string;
@@ -63,4 +63,4 @@ export interface UserProfile {
     city?: string;
     postalCode?: string;
   };
-} 
+}

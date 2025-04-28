@@ -26,6 +26,7 @@ import { AuthTokens, ApiError } from "@/types/auth";
 
 declare global {
   var authStateChanged: boolean;
+  var registrationCompleted: boolean;
 }
 
 WebBrowser.maybeCompleteAuthSession();
@@ -35,12 +36,13 @@ const API_URL = "http://localhost:4000";
 type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
+  Home: undefined;
 };
 
 export default function LoginScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState("jkdumpkj2@gmail.com");
-  const [password, setPassword] = useState("jkdumpkj@gmail.com");
+  const [email, setEmail] = useState("jkdumpkj@gmail.com");
+  const [password, setPassword] = useState("Developer2024");
   const [loading, setLoading] = useState(false);
   const width = useWindowDimensions().width * 0.9;
 
@@ -112,35 +114,14 @@ export default function LoginScreen() {
         password,
       });
 
-      const responseData = response.data as AuthTokens & { user?: any };
+      const responseData = response.data as AuthTokens;
+
+      console.log(responseData.accessToken, "signin");
 
       await AsyncStorage.setItem("accessToken", responseData.accessToken);
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
-      await AsyncStorage.setItem("userEmail", email);
-
-      // Create a basic user profile if it doesn't exist
-      const existingProfile = await AsyncStorage.getItem("userProfile");
-      if (!existingProfile) {
-        // If response contains user data, use it
-        if (responseData.user) {
-          await AsyncStorage.setItem(
-            "userProfile",
-            JSON.stringify(responseData.user),
-          );
-        } else {
-          // Create minimal profile with email only
-          const basicProfile = {
-            firstName: "User",
-            lastName: "",
-            email: email,
-            userLogo: "",
-          };
-          await AsyncStorage.setItem(
-            "userProfile",
-            JSON.stringify(basicProfile),
-          );
-        }
-      }
+      // Fetch user data after successful login
+      await fetchUserData(responseData.accessToken);
 
       reloadApp();
     } catch (error: unknown) {
@@ -158,9 +139,41 @@ export default function LoginScreen() {
     }
   };
 
+  const fetchUserData = async (accessToken: string) => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const userData = response.data;
+      await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      const basicProfile = {
+        firstName: "User",
+        lastName: "",
+        email: email,
+        userLogo: "",
+        phoneNumber: "",
+        companyName: "",
+        address: {
+          streetAddress: "",
+          streetAddressLine2: "",
+          city: "",
+          postalCode: "",
+        },
+      };
+      await AsyncStorage.setItem("userProfile", JSON.stringify(basicProfile));
+    }
+  };
+
   const reloadApp = async () => {
     try {
+      // Set both flags to true to trigger navigation to the main app
       global.authStateChanged = true;
+      global.registrationCompleted = true;
 
       Alert.alert("Success", "Login successful!", [
         {

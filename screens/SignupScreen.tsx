@@ -56,7 +56,7 @@ export default function SignupScreen() {
   });
 
   const [step2Form, setStep2Form] = useState<SignupFormStep2>({
-    phone: "",
+    phoneNumber: "",
     companyName: "",
     streetAddress: "",
     streetAddressLine2: "",
@@ -144,14 +144,14 @@ export default function SignupScreen() {
 
   // Validation for Step 2
   const validateStep2 = () => {
-    if (!step2Form.phone.trim()) {
+    if (!step2Form.phoneNumber.trim()) {
       Alert.alert("Invalid Input", "Please enter your phone number");
       return false;
     }
 
     // Basic phone validation
     const phoneRegex = /^\+?[0-9]{8,15}$/;
-    if (!phoneRegex.test(step2Form.phone.replace(/\s/g, ""))) {
+    if (!phoneRegex.test(step2Form.phoneNumber.replace(/\s/g, ""))) {
       Alert.alert("Invalid Phone", "Please enter a valid phone number");
       return false;
     }
@@ -238,7 +238,7 @@ export default function SignupScreen() {
     try {
       // Send the step 2 data to the add-user-fields endpoint
       const userData = {
-        phoneNumber: step2Form.phone,
+        phoneNumber: step2Form.phoneNumber,
         companyName: step2Form.companyName,
         address: {
           streetLine1: step2Form.streetAddress,
@@ -267,7 +267,7 @@ export default function SignupScreen() {
         lastName: step1Form.lastName,
         email: step1Form.email,
         userLogo: step1Form.userLogo || "",
-        phone: step2Form.phone,
+        phoneNumber: step2Form.phoneNumber,
         companyName: step2Form.companyName,
         address: {
           streetAddress: step2Form.streetAddress,
@@ -450,8 +450,10 @@ export default function SignupScreen() {
           style={styles.input}
           placeholder="Phone Number *"
           placeholderTextColor="#aaa"
-          value={step2Form.phone}
-          onChangeText={(text) => setStep2Form({ ...step2Form, phone: text })}
+          value={step2Form.phoneNumber}
+          onChangeText={(text) =>
+            setStep2Form({ ...step2Form, phoneNumber: text })
+          }
           keyboardType="phone-pad"
         />
 

@@ -39,7 +39,7 @@ export default function UserScreen() {
     lastName: "",
     email: "",
     userLogo: "",
-    phone: "",
+    phoneNumber: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -134,10 +134,10 @@ export default function UserScreen() {
           </Text>
           <Text style={styles.profileEmail}>{userProfile.email}</Text>
 
-          {userProfile.phone && (
+          {userProfile.phoneNumber && (
             <Text style={styles.profileDetail}>
               <FontAwesome name="phone" size={14} color="#888" />
-              {userProfile.phone}
+              {userProfile.phoneNumber}
             </Text>
           )}
 

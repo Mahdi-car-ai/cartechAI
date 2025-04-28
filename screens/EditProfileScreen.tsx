@@ -37,7 +37,7 @@ interface EditProfileForm {
   lastName: string;
   email: string;
   userLogo?: string;
-  phone: string;
+  phoneNumber: string;
   companyName: string;
   streetAddress: string;
   streetAddressLine2: string;
@@ -67,7 +67,7 @@ export default function EditProfileScreen() {
     lastName: "",
     email: "",
     userLogo: "",
-    phone: "",
+    phoneNumber: "",
     companyName: "",
     streetAddress: "",
     streetAddressLine2: "",
@@ -99,7 +99,7 @@ export default function EditProfileScreen() {
           lastName: userProfile.lastName || "",
           email: userProfile.email || "",
           userLogo: userProfile.userLogo || "",
-          phone: userProfile.phone || "",
+          phoneNumber: userProfile.phoneNumber || "",
           companyName: userProfile.companyName || "",
           streetAddress: userProfile.address?.streetAddress || "",
           streetAddressLine2: userProfile.address?.streetAddressLine2 || "",
@@ -135,6 +135,7 @@ export default function EditProfileScreen() {
     });
 
     if (!result.canceled) {
+      console.log(result.assets[0].uri);
       setFormData({ ...formData, userLogo: result.assets[0].uri });
     }
   };
@@ -164,9 +165,9 @@ export default function EditProfileScreen() {
     }
 
     // Only validate phone if it's not empty
-    if (formData.phone.trim()) {
+    if (formData.phoneNumber.trim()) {
       const phoneRegex = /^\+?[0-9]{8,15}$/;
-      if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
+      if (!phoneRegex.test(formData.phoneNumber.replace(/\s/g, ""))) {
         Alert.alert("Invalid Phone", "Please enter a valid phone number");
         return false;
       }
@@ -190,7 +191,7 @@ export default function EditProfileScreen() {
     if (passwordForm.newPassword.length < 6) {
       Alert.alert(
         "Invalid Password",
-        "New password must be at least 6 characters long"
+        "New password must be at least 6 characters long",
       );
       return false;
     }
@@ -217,7 +218,7 @@ export default function EditProfileScreen() {
         lastName: formData.lastName,
         email: formData.email,
         userLogo: formData.userLogo,
-        phone: formData.phone,
+        phoneNumber: formData.phoneNumber,
         companyName: formData.companyName,
         address: {
           streetAddress: formData.streetAddress,
@@ -229,9 +230,10 @@ export default function EditProfileScreen() {
 
       // Optional: Send update to backend
       const accessToken = await AsyncStorage.getItem("accessToken");
+      console.log(accessToken, "updateData");
       if (accessToken) {
-        await axios.put(`${API_URL}/users/profile`, updateData, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+        await axios.patch(`${API_URL}/users`, updateData, {
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       }
 
@@ -279,7 +281,7 @@ export default function EditProfileScreen() {
         },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       // Reset form and close modal
@@ -400,7 +402,7 @@ export default function EditProfileScreen() {
               autoCapitalize="none"
             />
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.changePasswordButton}
               onPress={() => setShowPasswordModal(true)}
             >
@@ -414,8 +416,10 @@ export default function EditProfileScreen() {
               style={styles.input}
               placeholder="Phone Number"
               placeholderTextColor="#aaa"
-              value={formData.phone}
-              onChangeText={(text) => setFormData({ ...formData, phone: text })}
+              value={formData.phoneNumber}
+              onChangeText={(text) =>
+                setFormData({ ...formData, phoneNumber: text })
+              }
               keyboardType="phone-pad"
             />
 
@@ -503,14 +507,14 @@ export default function EditProfileScreen() {
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.modalCloseButton}
                   onPress={() => setShowPasswordModal(false)}
                 >
                   <FontAwesome name="times" size={20} color="#fff" />
                 </TouchableOpacity>
               </View>
-              
+
               <TextInput
                 style={styles.modalInput}
                 placeholder="Current Password"
@@ -522,7 +526,7 @@ export default function EditProfileScreen() {
                 secureTextEntry
                 autoCapitalize="none"
               />
-              
+
               <TextInput
                 style={styles.modalInput}
                 placeholder="New Password"
@@ -534,7 +538,7 @@ export default function EditProfileScreen() {
                 secureTextEntry
                 autoCapitalize="none"
               />
-              
+
               <TextInput
                 style={styles.modalInput}
                 placeholder="Confirm New Password"
@@ -546,7 +550,7 @@ export default function EditProfileScreen() {
                 secureTextEntry
                 autoCapitalize="none"
               />
-              
+
               <View style={styles.modalButtonsContainer}>
                 {passwordLoading ? (
                   <ActivityIndicator size="large" color="#95ff77" />
@@ -558,12 +562,14 @@ export default function EditProfileScreen() {
                     >
                       <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       style={[styles.modalButton, styles.submitButton]}
                       onPress={handleChangePassword}
                     >
-                      <Text style={styles.submitButtonText}>Change Password</Text>
+                      <Text style={styles.submitButtonText}>
+                        Change Password
+                      </Text>
                     </TouchableOpacity>
                   </>
                 )}

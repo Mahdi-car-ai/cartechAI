@@ -98,14 +98,14 @@ const Layout = () => {
       const accessToken = await AsyncStorage.getItem("accessToken");
       const hasAuth = !!accessToken;
       setIsAuthenticated(hasAuth);
-      
+
       if (hasAuth) {
         // Check if registration is complete by looking for the phone field
         // in the user profile, which is only set after step 2
         const userProfileStr = await AsyncStorage.getItem("userProfile");
         if (userProfileStr) {
           const userProfile = JSON.parse(userProfileStr);
-          const hasPhone = !!userProfile.phone;
+          const hasPhone = !!userProfile.phoneNumber;
           setIsRegistrationComplete(hasPhone);
           global.registrationCompleted = hasPhone;
         } else {
@@ -159,88 +159,86 @@ const Layout = () => {
 
   return (
     <>
-      {isAuthenticated ? (
-        isRegistrationComplete ? (
-          <Drawer.Navigator
-            drawerContent={(props) => <CustomDrawer {...props} />}
-            screenOptions={{
-              headerShown: false,
-              overlayColor: "rgba(0, 0, 0, 0.5)",
-              drawerPosition: "left",
-            }}
+      {isAuthenticated && isRegistrationComplete ? (
+        <Drawer.Navigator
+          drawerContent={(props) => <CustomDrawer {...props} />}
+          screenOptions={{
+            headerShown: false,
+            overlayColor: "rgba(0, 0, 0, 0.5)",
+            drawerPosition: "left",
+          }}
+        >
+          <Drawer.Screen
+            name="Home"
+            options={{ drawerItemStyle: { display: "none" } }}
           >
-            <Drawer.Screen
-              name="Home"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => <ScreenWithDrawer {...props} component={HomeScreen} />}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="CarDetails"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={CarDetailsScreen} />
-              )}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="CommunityScreen"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={CommunityScreen} />
-              )}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="EnterCarDetails"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={EnterCarDetailsScreen} />
-              )}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="UserScreen"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => <ScreenWithDrawer {...props} component={UserScreen} />}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="EditProfile"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={EditProfileScreen} hideDrawerButton />
-              )}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="ChatScreen"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => <ScreenWithDrawer {...props} component={ChatScreen} />}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="CreatePostScreen"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={CreatePostScreen} />
-              )}
-            </Drawer.Screen>
-            <Drawer.Screen
-              name="PostDetailsScreen"
-              options={{ drawerItemStyle: { display: "none" } }}
-            >
-              {(props) => (
-                <ScreenWithDrawer {...props} component={PostDetailsScreen} />
-              )}
-            </Drawer.Screen>
-          </Drawer.Navigator>
-        ) : (
-          <Drawer.Navigator screenOptions={{ headerShown: false }}>
-            <Drawer.Screen name="Signup" component={SignupScreen} />
-          </Drawer.Navigator>
-        )
+            {(props) => <ScreenWithDrawer {...props} component={HomeScreen} />}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="CarDetails"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={CarDetailsScreen} />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="CommunityScreen"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={CommunityScreen} />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="EnterCarDetails"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={EnterCarDetailsScreen} />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="UserScreen"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => <ScreenWithDrawer {...props} component={UserScreen} />}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="EditProfile"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer
+                {...props}
+                component={EditProfileScreen}
+                hideDrawerButton
+              />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="ChatScreen"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => <ScreenWithDrawer {...props} component={ChatScreen} />}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="CreatePostScreen"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={CreatePostScreen} />
+            )}
+          </Drawer.Screen>
+          <Drawer.Screen
+            name="PostDetailsScreen"
+            options={{ drawerItemStyle: { display: "none" } }}
+          >
+            {(props) => (
+              <ScreenWithDrawer {...props} component={PostDetailsScreen} />
+            )}
+          </Drawer.Screen>
+        </Drawer.Navigator>
       ) : (
         <Drawer.Navigator screenOptions={{ headerShown: false }}>
           <Drawer.Screen name="Login" component={LoginScreen} />
