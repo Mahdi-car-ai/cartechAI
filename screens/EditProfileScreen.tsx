@@ -17,7 +17,6 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import CustomButton from "@/components/Button";
 import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Logo from "@/components/ui/Logo";
@@ -26,6 +25,7 @@ import { UserProfile, ApiError } from "@/types/auth";
 import { Colors } from "@/constants/Colors";
 import api from "@/services/api";
 import { updateProfile as updateUserProfile } from "@/services/authService";
+import CustomButton from "@/components/Button";
 
 const API_URL = "http://localhost:4000";
 
@@ -343,9 +343,7 @@ export default function EditProfileScreen() {
                 />
               ) : (
                 <Image
-                  source={{
-                    uri: "https://avatar.iran.liara.run/public/boy?username=Ash",
-                  }}
+                  source={require("../assets/images/icons/user.png")}
                   style={styles.profileImage}
                 />
               )}

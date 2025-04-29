@@ -122,9 +122,7 @@ export default function UserScreen() {
             />
           ) : (
             <Image
-              source={{
-                uri: "https://avatar.iran.liara.run/public/boy?username=Ash",
-              }}
+              source={require("../assets/images/icons/user.png")}
               style={styles.profileImage}
             />
           )}

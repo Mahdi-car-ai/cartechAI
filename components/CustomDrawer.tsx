@@ -117,10 +117,13 @@ const CustomDrawer = (props: DrawerProps) => {
         } else {
           const currentUser = auth.currentUser;
           if (currentUser) {
-            await AsyncStorage.setItem("userProfile", JSON.stringify({
-              email: currentUser.email,
-              photoURL: currentUser.photoURL
-            }));
+            await AsyncStorage.setItem(
+              "userProfile",
+              JSON.stringify({
+                email: currentUser.email,
+                photoURL: currentUser.photoURL,
+              }),
+            );
             setUser(currentUser);
           }
         }
@@ -130,7 +133,7 @@ const CustomDrawer = (props: DrawerProps) => {
     };
 
     loadUserProfile();
-    
+
     const fetchChats = async () => {
       const fetchedChats = await getChats();
       setChats(fetchedChats as Chat[]);
@@ -222,14 +225,14 @@ const CustomDrawer = (props: DrawerProps) => {
         style={styles.profileContainer}
         onPress={() => navigation.navigate("UserScreen")}
       >
-        <Image
-          source={{
-            uri:
-              user?.photoURL ||
-              "https://avatar.iran.liara.run/public/boy?username=Ash",
-          }}
-          style={styles.profileImage}
-        />
+        {user?.photoURLo ? (
+          <Image source={{ uri: user.userLogo }} style={styles.profileImage} />
+        ) : (
+          <Image
+            source={require("../assets/images/icons/user.png")}
+            style={styles.profileImage}
+          />
+        )}
         <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
           {user?.email || " "}
         </Text>
