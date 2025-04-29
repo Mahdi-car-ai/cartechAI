@@ -313,6 +313,16 @@ class SocketManager {
     this.socket.on("message", callback);
   }
 
+  public offMessage(): void {
+    if (!this.socket) {
+      console.error("Socket not initialized");
+      return;
+    }
+    
+    // Remove all message listeners
+    this.socket.off("message");
+  }
+
   public disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();

@@ -135,8 +135,8 @@ const CustomDrawer = (props: DrawerProps) => {
     loadUserProfile();
 
     const fetchChats = async () => {
-      const fetchedChats = await getChats();
-      setChats(fetchedChats as Chat[]);
+      // const fetchedChats = await getChats();
+      // setChats(fetchedChats as Chat[]);
     };
 
     fetchChats();

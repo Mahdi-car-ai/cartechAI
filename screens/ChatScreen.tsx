@@ -513,6 +513,9 @@ const ChatScreen = () => {
         if (route.params?.chatId) {
           socketManager.joinRoom(route.params.chatId);
 
+          // Clear any existing message listeners before adding new ones
+          socketManager.offMessage();
+
           // Listen for socket messages
           socketManager.onMessage((messageData) => {
             console.log("Received socket message:", messageData);
@@ -571,6 +574,7 @@ const ChatScreen = () => {
 
     // Cleanup socket connection on unmount
     return () => {
+      socketManager.offMessage(); // Remove message listener
       socketManager.disconnect();
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
