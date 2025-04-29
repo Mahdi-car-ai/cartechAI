@@ -38,7 +38,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 // Function to refresh token
 const refreshToken = async (): Promise<string | null> => {
-  // console.log("refreshToken");
+  console.log("refreshToken");
   try {
     // const refreshToken = await AsyncStorage.getItem("refreshToken");
     // Use the refresh token from storage instead of hardcoded value

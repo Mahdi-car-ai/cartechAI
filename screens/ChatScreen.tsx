@@ -64,6 +64,9 @@ const ChatScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
 
+  // Add timeout reference for message response
+  const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Initialization for voice recognition
   useEffect(() => {
     // Initialize voice handler
@@ -217,14 +220,54 @@ const ChatScreen = () => {
 
     // Show typing indicator for AI response
     setIsTyping(true);
+    const typingId = `typing-${Date.now()}`;
     const typingMessage: ChatMessage = {
-      id: "typing",
+      id: typingId,
       text: "CarTechAI is analyzing your image...",
       sender: "bot",
     };
     setMessages((prevMessages) => [...prevMessages, typingMessage]);
 
-    // The actual response will come through the socket connection
+    // Set a timeout to handle case when no response comes back
+    if (messageTimeoutRef.current) {
+      clearTimeout(messageTimeoutRef.current);
+    }
+
+    messageTimeoutRef.current = setTimeout(() => {
+      // Check if typing indicator still exists (no response received)
+      setMessages((prevMessages) => {
+        const typingExists = prevMessages.some((msg) => msg.id === typingId);
+
+        if (typingExists) {
+          // Replace typing indicator with error message
+          return prevMessages.map((msg) =>
+            msg.id === typingId
+              ? {
+                  ...msg,
+                  id: `error-${Date.now()}`,
+                  text: "Sorry, I didn't receive a response for your image. Please try again.",
+                }
+              : msg,
+          );
+        }
+        return prevMessages;
+      });
+
+      setIsTyping(false);
+
+      // Try to reconnect socket
+      socketManager.disconnect();
+      socketManager
+        .connect()
+        .then(() => {
+          if (chatId) {
+            socketManager.joinRoom(chatId);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to reconnect socket:", error);
+        });
+    }, 15000); // 15 second timeout
   };
 
   useEffect(() => {
@@ -235,16 +278,16 @@ const ChatScreen = () => {
           // TODO: Implement chat creation through your backend
           // For now, we'll use a temporary ID
           const tempChatId = "chat-" + Date.now().toString();
-          
+
           // Clear messages when creating a new chat
           setMessages([]);
           setConversationHistory([]);
-          
+
           setChatId(tempChatId);
-          
+
           // Join the chat room
           socketManager.joinRoom(tempChatId);
-          
+
           // First message from bot will come through the socket connection
         }
       } else if (route.params?.chatId) {
@@ -253,7 +296,7 @@ const ChatScreen = () => {
           setMessages([]);
           setConversationHistory([]);
         }
-        
+
         setChatId(route.params.chatId);
         // If we have a chat ID, we'll join the room and previous messages
         // will be loaded through socket connection
@@ -466,23 +509,29 @@ const ChatScreen = () => {
       try {
         await socketManager.connect();
         setSocketConnected(true);
-        
+
         if (route.params?.chatId) {
           socketManager.joinRoom(route.params.chatId);
-          
+
           // Listen for socket messages
           socketManager.onMessage((messageData) => {
             console.log("Received socket message:", messageData);
-            
+
+            // Clear any pending timeout when we receive a message
+            if (messageTimeoutRef.current) {
+              clearTimeout(messageTimeoutRef.current);
+              messageTimeoutRef.current = null;
+            }
+
             // If the message is from the bot (senderId is 00000000-0000-0000-0000-000000000000)
             if (
               messageData.senderId === "00000000-0000-0000-0000-000000000000"
             ) {
               // Remove typing indicator if exists
               setMessages((prevMessages) =>
-                prevMessages.filter((msg) => msg.id !== "typing"),
+                prevMessages.filter((msg) => !msg.id.startsWith("typing")),
               );
-              
+
               // Add message to state if it's not already there
               setMessages((prevMessages) => {
                 const messageExists = prevMessages.some(
@@ -490,7 +539,7 @@ const ChatScreen = () => {
                     msg.id === messageData.id ||
                     (msg.text === messageData.content && msg.sender === "bot"),
                 );
-                
+
                 if (!messageExists) {
                   return [
                     ...prevMessages,
@@ -523,6 +572,9 @@ const ChatScreen = () => {
     // Cleanup socket connection on unmount
     return () => {
       socketManager.disconnect();
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
     };
   }, [route.params?.chatId]);
 
@@ -530,39 +582,55 @@ const ChatScreen = () => {
   useEffect(() => {
     const loadPreviousMessages = async () => {
       if (!chatId || !socketConnected) return;
-      
+
       try {
         // Request previous messages from the server
         // This assumes your socket service has a method to request chat history
         // If it doesn't, you'll need to implement this on the backend and client
         if (socketManager.isConnected()) {
           // Request chat history from socket/backend
-          socketManager.emit('getChatHistory', { chatId });
-          
+          socketManager.emit("getChatHistory", { chatId });
+
           // You should handle the response in the onMessage listener
           // by adding a specific handler for history messages
-          socketManager.once('chatHistory', (historyData: { messages: Array<{ id?: string; content: string; senderId?: string; timestamp?: string }> }) => {
-            if (historyData && Array.isArray(historyData.messages)) {
-              const formattedMessages = historyData.messages.map(msg => ({
-                id: msg.id || Date.now().toString(),
-                text: msg.content,
-                sender: msg.senderId === "00000000-0000-0000-0000-000000000000" ? "bot" : "user",
-                timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
-              }));
-              
-              setMessages(formattedMessages);
-              setConversationHistory(formattedMessages);
-            }
-          });
+          socketManager.once(
+            "chatHistory",
+            (historyData: {
+              messages: Array<{
+                id?: string;
+                content: string;
+                senderId?: string;
+                timestamp?: string;
+              }>;
+            }) => {
+              if (historyData && Array.isArray(historyData.messages)) {
+                const formattedMessages = historyData.messages.map((msg) => ({
+                  id: msg.id || Date.now().toString(),
+                  text: msg.content,
+                  sender:
+                    msg.senderId === "00000000-0000-0000-0000-000000000000"
+                      ? "bot"
+                      : "user",
+                  timestamp: msg.timestamp
+                    ? new Date(msg.timestamp)
+                    : new Date(),
+                }));
+
+                setMessages(formattedMessages);
+                setConversationHistory(formattedMessages);
+              }
+            },
+          );
         }
       } catch (error) {
         console.error("Error loading previous messages:", error);
       }
     };
-    
+
     loadPreviousMessages();
   }, [chatId, socketConnected]);
 
+  // Handle sending message with timeout for response
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
@@ -596,12 +664,54 @@ const ChatScreen = () => {
       socketManager.sendMessage(inputText);
 
       // Show typing indicator
+      const typingId = `typing-${Date.now()}`;
       const typingMessage: ChatMessage = {
-        id: "typing",
+        id: typingId,
         text: "CarTechAI is analyzing...",
         sender: "bot",
       };
       setMessages((prevMessages) => [...prevMessages, typingMessage]);
+
+      // Set a timeout to handle case when no response comes back
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+
+      messageTimeoutRef.current = setTimeout(() => {
+        // Check if typing indicator still exists (no response received)
+        setMessages((prevMessages) => {
+          const typingExists = prevMessages.some((msg) => msg.id === typingId);
+
+          if (typingExists) {
+            // Replace typing indicator with error message
+            return prevMessages.map((msg) =>
+              msg.id === typingId
+                ? {
+                    ...msg,
+                    id: `error-${Date.now()}`,
+                    text: "Sorry, I didn't receive a response from the server. Please try again.",
+                  }
+                : msg,
+            );
+          }
+          return prevMessages;
+        });
+
+        setIsTyping(false);
+
+        // Try to reconnect socket
+        socketManager.disconnect();
+        socketManager
+          .connect()
+          .then(() => {
+            if (chatId) {
+              socketManager.joinRoom(chatId);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to reconnect socket:", error);
+          });
+      }, 15000); // 15 second timeout
 
       // The response will come through the socket connection
     } else {
@@ -618,6 +728,15 @@ const ChatScreen = () => {
       scrollToBottom();
     }
   }, [messages]); // Runs every time a new message is added
+
+  // Clear timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <KeyboardAvoidingView
