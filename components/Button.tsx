@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent, View, useWindowDimensions } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent, View, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 interface ButtonProps {
@@ -12,6 +12,7 @@ interface ButtonProps {
     width?: number;
     iconColor?: string;
     disabled?: boolean;
+    loading?: boolean;
 }
 const CustomButton: React.FC<ButtonProps> = ({ 
     title, 
@@ -22,7 +23,8 @@ const CustomButton: React.FC<ButtonProps> = ({
     icon, 
     iconColor = '#2a2e2e',
     width,
-    disabled = false
+    disabled = false,
+    loading = false
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     
@@ -32,19 +34,25 @@ const CustomButton: React.FC<ButtonProps> = ({
                 styles.button, 
                 { backgroundColor, width: width || windowWidth * 0.9 }, 
                 style,
-                disabled && styles.disabledButton
+                (disabled || loading) && styles.disabledButton
             ]}
             onPress={onPress}
-            disabled={disabled}
+            disabled={disabled || loading}
         >
             <View style={styles.content}>
-                {icon && (
+                {loading ? (
+                    <ActivityIndicator 
+                        size="small" 
+                        color={iconColor} 
+                        style={styles.loader} 
+                    />
+                ) : icon ? (
                     <Icon 
                         name={icon} 
                         color={iconColor} 
                         containerStyle={styles.icon} 
                     />
-                )}
+                ) : null}
                 <Text style={[styles.text, { color }]} numberOfLines={1}>
                     {title}
                 </Text>
@@ -76,6 +84,10 @@ const styles = StyleSheet.create({
     icon: {
         position: 'absolute',
         left: 8, 
+    },
+    loader: {
+        position: 'absolute',
+        left: 8,
     },
     text: {
         fontFamily: 'Aeonik',

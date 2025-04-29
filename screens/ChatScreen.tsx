@@ -19,16 +19,11 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import Logo from "@/components/ui/Logo";
 import { ActivityIndicator } from "react-native";
 import RenderChat from "@/utils/RenderChat";
-import {
-  createChat,
-  addMessage,
-  getChats,
-  getMessagesByChatId,
-} from "../utils/Chat";
 import { RootStackParamList } from "@/types/NavigationTypes";
-import { CarDetails } from "@/types/CarDetails";
 import * as ImagePicker from "expo-image-picker";
 import Voice from "@react-native-voice/voice";
+import socketManager from "@/services/SocketManager";
+import { CarDetails } from "@/types/CarDetails";
 
 // Define types for the chat message
 interface ChatMessage {
@@ -49,12 +44,6 @@ interface ChatMessage {
 type ChatScreenRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
-const OPENAI_API_KEY =
-  "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";
-
-const SERPAPI_KEY =
-  "2c464ccd6bf9d342cd364f66bf1c68c87f2053a15f7e4e36cb1fa3af0c36af77";
-
 const ChatScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const flatListRef = useRef<FlatList<ChatMessage> | null>(null); // Reference to FlatList
@@ -73,6 +62,7 @@ const ChatScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedText, setRecordedText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   // Initialization for voice recognition
   useEffect(() => {
@@ -213,93 +203,65 @@ const ChatScreen = () => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setConversationHistory((prevHistory) => [...prevHistory, newMessage]);
 
-    // Store in Firebase (modify your addMessage function to handle image uploads if needed)
-    try {
-      await addMessage(chatId, "user", text || "Image", [imageUri]);
-
-      // Now send a follow-up typing indicator and get AI response
-      setIsTyping(true);
-      const typingMessage: ChatMessage = {
-        id: "typing",
-        text: "CarTechAI is analyzing your image...",
-        sender: "bot",
-      };
-      setMessages((prevMessages) => [...prevMessages, typingMessage]);
-
-      // Handle AI response to image (similar to handleSend but for image processing)
-      // This is a simplified version - you may need to expand this
-      setTimeout(async () => {
-        try {
-          // Create AI response for the image
-          const aiResponse =
-            "I've received your image. Can you tell me more about what you're seeing?";
-
-          await addMessage(chatId, "CarTechAI", aiResponse);
-
-          setMessages((prevMessages) => [
-            ...prevMessages.filter((msg) => msg.id !== "typing"),
-            {
-              id: Date.now().toString(),
-              text: aiResponse,
-              sender: "bot",
-            },
-          ]);
-        } catch (error) {
-          console.error("Error creating AI response for image:", error);
-          setMessages((prevMessages) => [
-            ...prevMessages.filter((msg) => msg.id !== "typing"),
-            {
-              id: Date.now().toString(),
-              text: "Error: Unable to process your image. Please try again.",
-              sender: "bot",
-            },
-          ]);
-        } finally {
-          setIsTyping(false);
-        }
-      }, 1500);
-    } catch (error) {
-      console.error("Error sending image:", error);
-      Alert.alert("Error", "Failed to send image. Please try again.");
+    // Send through socket if connected
+    if (socketConnected && socketManager.isConnected()) {
+      // TODO: Implement image upload through your backend
+      socketManager.sendMessage(text || "Image");
+    } else {
+      // Show error if socket isn't connected
+      Alert.alert(
+        "Connection Error",
+        "Unable to send image. Please check your connection.",
+      );
     }
+
+    // Show typing indicator for AI response
+    setIsTyping(true);
+    const typingMessage: ChatMessage = {
+      id: "typing",
+      text: "CarTechAI is analyzing your image...",
+      sender: "bot",
+    };
+    setMessages((prevMessages) => [...prevMessages, typingMessage]);
+
+    // The actual response will come through the socket connection
   };
 
   useEffect(() => {
     const initChat = async () => {
       if (!chatId && !route.params?.chatId) {
-        const createdChatId = await createChat(carName);
-        if (createdChatId) {
-          setChatId(createdChatId);
-
-          // First message from bot
-          const firstMessage: ChatMessage = {
-            id: Date.now().toString(),
-            sender: "bot",
-            message: `Hello! I am CarTechAI. How can I assist you with your car:\n${carDetails?.Make || ""} ${carDetails?.Model || ""} - ${carDetails?.["Model Year"] || ""}?`,
-            timestamp: new Date(), // Optional: Firestore uses serverTimestamp() automatically
-          };
-
-          // Save message to Firestore
-          const messageId = await addMessage(
-            createdChatId,
-            firstMessage.sender,
-            firstMessage.message || "",
-          );
-          if (messageId) {
-            setMessages([{ ...firstMessage, id: messageId }]);
-          }
+        // Create chat through socket instead of Firebase
+        if (socketConnected && socketManager.isConnected()) {
+          // TODO: Implement chat creation through your backend
+          // For now, we'll use a temporary ID
+          const tempChatId = "chat-" + Date.now().toString();
+          
+          // Clear messages when creating a new chat
+          setMessages([]);
+          setConversationHistory([]);
+          
+          setChatId(tempChatId);
+          
+          // Join the chat room
+          socketManager.joinRoom(tempChatId);
+          
+          // First message from bot will come through the socket connection
         }
       } else if (route.params?.chatId) {
-        setChatId(route.params?.chatId);
-        const fetchedMessages = await getMessagesByChatId(route.params.chatId);
-        if (fetchedMessages && Array.isArray(fetchedMessages)) {
-          setMessages(fetchedMessages as ChatMessage[]);
+        // Clear previous messages when changing chat
+        if (chatId !== route.params.chatId) {
+          setMessages([]);
+          setConversationHistory([]);
         }
+        
+        setChatId(route.params.chatId);
+        // If we have a chat ID, we'll join the room and previous messages
+        // will be loaded through socket connection
       }
     };
 
     initChat();
-  }, [chatId, route.params?.chatId]);
+  }, [chatId, route.params?.chatId, socketConnected]);
 
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {},
@@ -498,6 +460,109 @@ const ChatScreen = () => {
     }
   };
 
+  // Connect to socket when component mounts
+  useEffect(() => {
+    const connectToSocket = async () => {
+      try {
+        await socketManager.connect();
+        setSocketConnected(true);
+        
+        if (route.params?.chatId) {
+          socketManager.joinRoom(route.params.chatId);
+          
+          // Listen for socket messages
+          socketManager.onMessage((messageData) => {
+            console.log("Received socket message:", messageData);
+            
+            // If the message is from the bot (senderId is 00000000-0000-0000-0000-000000000000)
+            if (
+              messageData.senderId === "00000000-0000-0000-0000-000000000000"
+            ) {
+              // Remove typing indicator if exists
+              setMessages((prevMessages) =>
+                prevMessages.filter((msg) => msg.id !== "typing"),
+              );
+              
+              // Add message to state if it's not already there
+              setMessages((prevMessages) => {
+                const messageExists = prevMessages.some(
+                  (msg) =>
+                    msg.id === messageData.id ||
+                    (msg.text === messageData.content && msg.sender === "bot"),
+                );
+                
+                if (!messageExists) {
+                  return [
+                    ...prevMessages,
+                    {
+                      id: messageData.id || Date.now().toString(),
+                      text: messageData.content,
+                      sender: "bot",
+                      timestamp: messageData.timestamp
+                        ? new Date(messageData.timestamp)
+                        : new Date(),
+                    },
+                  ];
+                }
+                return prevMessages;
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error connecting to socket:", error);
+        Alert.alert(
+          "Connection Error",
+          "Failed to connect to chat server. Some features may not work properly.",
+        );
+      }
+    };
+
+    connectToSocket();
+
+    // Cleanup socket connection on unmount
+    return () => {
+      socketManager.disconnect();
+    };
+  }, [route.params?.chatId]);
+
+  // Load previous messages when chat ID changes
+  useEffect(() => {
+    const loadPreviousMessages = async () => {
+      if (!chatId || !socketConnected) return;
+      
+      try {
+        // Request previous messages from the server
+        // This assumes your socket service has a method to request chat history
+        // If it doesn't, you'll need to implement this on the backend and client
+        if (socketManager.isConnected()) {
+          // Request chat history from socket/backend
+          socketManager.emit('getChatHistory', { chatId });
+          
+          // You should handle the response in the onMessage listener
+          // by adding a specific handler for history messages
+          socketManager.once('chatHistory', (historyData: { messages: Array<{ id?: string; content: string; senderId?: string; timestamp?: string }> }) => {
+            if (historyData && Array.isArray(historyData.messages)) {
+              const formattedMessages = historyData.messages.map(msg => ({
+                id: msg.id || Date.now().toString(),
+                text: msg.content,
+                sender: msg.senderId === "00000000-0000-0000-0000-000000000000" ? "bot" : "user",
+                timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+              }));
+              
+              setMessages(formattedMessages);
+              setConversationHistory(formattedMessages);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error loading previous messages:", error);
+      }
+    };
+    
+    loadPreviousMessages();
+  }, [chatId, socketConnected]);
+
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
@@ -521,154 +586,31 @@ const ChatScreen = () => {
       return;
     }
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: "user",
-    };
-
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setConversationHistory((prevHistory) => [...prevHistory, newMessage]); // Store in history
     setInputText("");
     setIsTyping(true);
 
-    await addMessage(chatId, "user", inputText);
+    // If socket is connected, send the message through socket
+    if (socketConnected && socketManager.isConnected()) {
+      socketManager.sendMessage(inputText);
 
-    const typingMessage: ChatMessage = {
-      id: "typing",
-      text: "CarTechAI is analyzing...",
-      sender: "bot",
-    };
-    setMessages((prevMessages) => [...prevMessages, typingMessage]);
+      // Show typing indicator
+      const typingMessage: ChatMessage = {
+        id: "typing",
+        text: "CarTechAI is analyzing...",
+        sender: "bot",
+      };
+      setMessages((prevMessages) => [...prevMessages, typingMessage]);
 
-    setTimeout(async () => {
-      try {
-        // Fetch AI response
-        const response = await fetch(
-          "https://api.openai.com/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              max_tokens: 150,
-              messages: [
-                {
-                  role: "system",
-                  content: `You are CarTechAI, an AI automotive mechanic. 
-                  User's car details: ${JSON.stringify(carDetails)}. 
-                  ONLY respond to automobile-related issues. 
-                  Ignore non-automotive questions entirely. 
-                  Keep responses **concise**.
-                  `,
-                },
-                ...conversationHistory.map((msg) => ({
-                  role: msg.sender === "user" ? "user" : "assistant",
-                  content: msg.text || "",
-                })),
-                { role: "user", content: inputText },
-              ],
-            }),
-          },
-        );
-
-        const data = await response.json();
-        const aiResponse =
-          data?.choices?.[0]?.message?.content?.trim() ||
-          "Sorry, I could not understand that.";
-
-        let images: string[] = [];
-        let youtubeVideo = null;
-
-        images = await fetchImagesFromSerpAPI(
-          `${inputText} ${carDetails?.Make || ""} ${carDetails?.Model || ""} ${carDetails?.["Model Year"] || ""} parts images or official diagrams`,
-        );
-
-        youtubeVideo = await fetchYoutubeVideosFromSerpAPI(
-          `${inputText} ${carDetails?.Make || ""} ${carDetails?.Model || ""} ${carDetails?.["Model Year"] || ""} videos`,
-        );
-
-        console.log(carDetails);
-
-        await addMessage(chatId, "CarTechAI", aiResponse, images, youtubeVideo);
-
-        // Typewriter effect for AI response
-        const typeWriterEffect = (
-          text: string,
-          callback: (text: string) => void,
-          completeCallback?: () => void,
-        ) => {
-          let index = 0;
-          let typedText = "";
-
-          const interval = setInterval(() => {
-            if (index < text.length) {
-              typedText += text.charAt(index);
-              index++;
-              callback(typedText);
-            } else {
-              clearInterval(interval);
-              if (completeCallback) completeCallback();
-            }
-          }, 10);
-        };
-
-        // Remove typing indicator and add AI response
-        setMessages((prevMessages) => [
-          ...prevMessages.filter((msg) => msg.id !== "typing"),
-          {
-            id: Date.now().toString(),
-            text: "",
-            sender: "bot",
-            images: [],
-            youtubeVideo: null,
-          },
-        ]);
-
-        typeWriterEffect(
-          aiResponse,
-          (updatedText) => {
-            setMessages((prevMessages) =>
-              prevMessages.map((msg, idx) =>
-                idx === prevMessages.length - 1
-                  ? { ...msg, text: updatedText }
-                  : msg,
-              ),
-            );
-          },
-          () => {
-            setMessages((prevMessages) =>
-              prevMessages.map((msg, idx) =>
-                idx === prevMessages.length - 1
-                  ? { ...msg, images, youtubeVideo }
-                  : msg,
-              ),
-            );
-          },
-        );
-      } catch (error) {
-        console.error("Error fetching AI response:", error);
-        await addMessage(
-          chatId,
-          "CarTechAI",
-          "Error: Unable to get a response. Please try again.",
-        );
-
-        setMessages((prevMessages) => [
-          ...prevMessages.filter((msg) => msg.id !== "typing"),
-          {
-            id: Date.now().toString(),
-            text: "Error: Unable to get a response. Please try again.",
-            sender: "bot",
-          },
-        ]);
-      } finally {
-        setIsTyping(false);
-      }
-    }, 50);
+      // The response will come through the socket connection
+    } else {
+      Alert.alert(
+        "Connection Error",
+        "Failed to send message. Please check your connection and try again.",
+      );
+      setIsTyping(false);
+    }
   };
 
   useEffect(() => {
@@ -676,56 +618,6 @@ const ChatScreen = () => {
       scrollToBottom();
     }
   }, [messages]); // Runs every time a new message is added
-
-  const fetchYoutubeVideosFromSerpAPI = async (query: string) => {
-    try {
-      const searchQuery = [
-        query,
-        carDetails?.Make,
-        carDetails?.Model,
-        carDetails?.["Model Year"],
-      ]
-        .filter(Boolean)
-        .join(" ");
-
-      console.log(carDetails);
-
-      const url = `https://serpapi.com/search.json?engine=youtube&search_query=${encodeURIComponent(
-        searchQuery,
-      )}&gl=us&hl=en&api_key=${SERPAPI_KEY}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.video_results && data.video_results.length > 0) {
-        return data.video_results.slice(0, 1).map((video: any) => ({
-          title: video.title,
-          link: video.link + "&pp=ygU%3D",
-          thumbnail:
-            video.thumbnail?.static ||
-            `https://img.youtube.com/vi/${
-              video.link.split("v=")[1]
-            }/hqdefault.jpg`, // Always use static image
-        }))[0];
-      }
-    } catch (error) {}
-    return null;
-  };
-
-  const fetchImagesFromSerpAPI = async (query: string) => {
-    try {
-      const response = await fetch(
-        `https://serpapi.com/search.json?q=${encodeURIComponent(
-          query,
-        )}&location=United+States&hl=en&gl=us&google_domain=google.com&tbm=isch&api_key=${SERPAPI_KEY}`,
-      );
-      const data = await response.json();
-      if (data.images_results && data.images_results.length > 0) {
-        return data.images_results.slice(0, 3).map((img: any) => img.original);
-      }
-    } catch (error) {}
-    return [];
-  };
 
   return (
     <KeyboardAvoidingView

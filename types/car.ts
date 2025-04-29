@@ -41,6 +41,6 @@ export interface CarDetails {
 
 // Define navigation types
 export type RootStackParamList = {
-  ChatScreen: { carDetails: CarDetails };
+  ChatScreen: { carDetails: CarDetails; chatId?: string };
   [key: string]: undefined | object;
 }; 
