@@ -9,43 +9,19 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Icon } from "react-native-elements";
 import Logo from "./ui/Logo";
 import { getChats } from "@/utils/Chat";
-
-// Define the Chat interface locally to avoid import issues
-interface ChatItem {
-  id: string;
-  type: string;
-  createdAt: string;
-}
-
-type RootStackParamList = {
-  Home: undefined;
-  ChatScreen: { chatId: string; carDetails?: any };
-  CommunityScreen: undefined;
-  UserScreen: undefined;
-  [key: string]: undefined | object;
-};
+import { RootStackParamList } from "@/types/NavigationTypes";
+import { CategorizedChats, ChatItem } from "@/types/chat";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
-interface CategorizedChats {
-  Today: ChatItem[];
-  Yesterday: ChatItem[];
-  "3 days ago": ChatItem[];
-  "4 days ago": ChatItem[];
-  "5 days ago": ChatItem[];
-  "6 days ago": ChatItem[];
-  "Last Week": ChatItem[];
-  [key: string]: ChatItem[];
-}
-
 const categorizeChats = (chats: ChatItem[]): CategorizedChats => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset to start of the day
+  today.setHours(0, 0, 0, 0);
 
   const categorizedChats: CategorizedChats = {
     Today: [],
@@ -204,7 +180,6 @@ const CustomDrawer = (props: DrawerProps) => {
         renderItem={({ item: [title, data] }) => renderSection(title, data)}
       />
 
-      {/* User Profile Section */}
       <TouchableOpacity
         style={styles.profileContainer}
         onPress={() => navigation.navigate("UserScreen")}
@@ -238,7 +213,6 @@ const styles = StyleSheet.create({
     borderTopColor: "#444",
     marginTop: 16,
   },
-  // Community Button Styles
   communityButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -247,7 +221,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   activeButton: {
-    backgroundColor: "#2a2e2e", // Background color when active
+    backgroundColor: "#2a2e2e",
   },
   communityButtonText: {
     fontSize: 16,
@@ -255,7 +229,6 @@ const styles = StyleSheet.create({
     fontFamily: "Aeonik",
     marginLeft: 12,
   },
-  // Chat Item Styles
   chatItemButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -265,14 +238,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   activeChatItem: {
-    backgroundColor: "#2a2e2e", // Default background color
+    backgroundColor: "#2a2e2e",
   },
   chatText: {
     fontFamily: "Aeonik",
     fontSize: 16,
     color: "#fff",
   },
-  // Profile Section Styles
   profileContainer: {
     flexDirection: "row",
     alignItems: "center",

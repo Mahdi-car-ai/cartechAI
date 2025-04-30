@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Linking,
   Image,
   Modal,
   Alert,
@@ -23,104 +22,48 @@ import { RootStackParamList } from "@/types/NavigationTypes";
 import * as ImagePicker from "expo-image-picker";
 import Voice from "@react-native-voice/voice";
 import socketManager from "@/services/SocketManager";
-import { CarDetails } from "@/types/CarDetails";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
 import { getChatMessages, Message as ApiMessage } from "@/utils/Chat";
-
-// Function to convert image URI to base64
-const getBase64FromUri = async (uri: string): Promise<string | null> => {
-  try {
-    // Check if the URI is valid
-    if (!uri || !uri.startsWith("file://")) {
-      console.error("Invalid URI format for image conversion:", uri);
-      return null;
-    }
-
-    // Read the file as base64
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    return base64 ? `data:image/jpeg;base64,${base64}` : null;
-  } catch (error) {
-    console.error("Error converting image to base64:", error);
-    return null;
-  }
-};
-
-// Define types for the chat message
-interface ChatMessage {
-  id: string;
-  text?: string;
-  message?: string;
-  sender: string;
-  images?: string[];
-  youtubeVideo?: {
-    title: string;
-    link: string;
-    thumbnail: string;
-  } | null;
-  timestamp?: Date;
-  [key: string]: any;
-}
+import { ChatMessage } from "@/types/chat";
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ChatScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const flatListRef = useRef<FlatList<ChatMessage> | null>(null); // Reference to FlatList
+  const flatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const route = useRoute<ChatScreenRouteProp>();
-  const carDetails = route.params?.carDetails || ({} as Partial<CarDetails>);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>(
-    [],
-  ); // Stores all messages
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [chatId, setChatId] = useState<string | null>(null);
-  const carName = `${carDetails?.Make || ""} ${carDetails?.Model || ""} - ${carDetails?.["Model Year"] || ""}`;
   const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedText, setRecordedText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
 
-  // Create ref for message timeout
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Add new state for API pagination
   const [messagePage, setMessagePage] = useState<number>(1);
   const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
-  const [totalMessages, setTotalMessages] = useState<number>(0);
   const messagesPerPage = 10;
 
-  // Add scroll position tracking
   const [isAtTop, setIsAtTop] = useState<boolean>(false);
-  const [scrollY, setScrollY] = useState<number>(0);
 
-  // Add a new state to control scrolling behavior during loading more messages
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] =
     useState<boolean>(false);
 
-  // Initialization for voice recognition
   useEffect(() => {
-    // Initialize voice handler
     Voice.onSpeechStart = onSpeechStart;
     Voice.onSpeechEnd = onSpeechEnd;
     Voice.onSpeechResults = onSpeechResults;
     Voice.onSpeechError = onSpeechError;
 
     return () => {
-      // Cleanup voice handler
       Voice.destroy().then(Voice.removeAllListeners);
     };
   }, []);
 
-  // Voice recognition handlers
   const onSpeechStart = () => {
     console.log("Speech recognition started");
   };
@@ -132,7 +75,6 @@ const ChatScreen = () => {
 
   const onSpeechResults = (e: any) => {
     const text = e.value && e.value.length > 0 ? e.value[0] : "";
-    setRecordedText(text);
     setInputText(text);
     console.log("Speech results:", text);
   };
@@ -143,7 +85,6 @@ const ChatScreen = () => {
     Alert.alert("Speech Recognition Error", "Please try again.");
   };
 
-  // Start recording
   const startRecording = async () => {
     try {
       await Voice.start("en-US");
@@ -157,7 +98,6 @@ const ChatScreen = () => {
     }
   };
 
-  // Stop recording
   const stopRecording = async () => {
     try {
       await Voice.stop();
@@ -167,11 +107,9 @@ const ChatScreen = () => {
     }
   };
 
-  // Image picker functions
   const takePhoto = async () => {
     setShowMediaOptions(false);
 
-    // Request camera permissions
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -200,7 +138,6 @@ const ChatScreen = () => {
   const pickImage = async () => {
     setShowMediaOptions(false);
 
-    // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -226,14 +163,12 @@ const ChatScreen = () => {
     }
   };
 
-  // Handle sending image message
   const handleImageMessage = async (imageUri: string, text: string) => {
     if (!chatId) {
       console.error("Chat ID is missing. Cannot store messages.");
       return;
     }
 
-    // Create a message with the image and text
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       text: text || "Image",
@@ -241,24 +176,17 @@ const ChatScreen = () => {
       images: [imageUri],
     };
 
-    // Add to UI
     setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setConversationHistory((prevHistory) => [...prevHistory, newMessage]);
 
-    // Send through socket if connected
     if (socketConnected && socketManager.isConnected()) {
-      // TODO: Implement image upload through your backend
       socketManager.sendMessage(text || "Image");
     } else {
-      // Show error if socket isn't connected
       Alert.alert(
         "Connection Error",
         "Unable to send image. Please check your connection.",
       );
     }
 
-    // Show typing indicator for AI response
-    setIsTyping(true);
     const typingId = `typing-${Date.now()}`;
     const typingMessage: ChatMessage = {
       id: typingId,
@@ -267,18 +195,15 @@ const ChatScreen = () => {
     };
     setMessages((prevMessages) => [...prevMessages, typingMessage]);
 
-    // Set a timeout to handle case when no response comes back
     if (messageTimeoutRef.current) {
       clearTimeout(messageTimeoutRef.current);
     }
 
     messageTimeoutRef.current = setTimeout(() => {
-      // Check if typing indicator still exists (no response received)
       setMessages((prevMessages) => {
         const typingExists = prevMessages.some((msg) => msg.id === typingId);
 
         if (typingExists) {
-          // Replace typing indicator with error message
           return prevMessages.map((msg) =>
             msg.id === typingId
               ? {
@@ -292,9 +217,6 @@ const ChatScreen = () => {
         return prevMessages;
       });
 
-      setIsTyping(false);
-
-      // Try to reconnect socket
       socketManager.disconnect();
       socketManager
         .connect()
@@ -306,29 +228,23 @@ const ChatScreen = () => {
         .catch((error) => {
           console.error("Failed to reconnect socket:", error);
         });
-    }, 15000); // 15 second timeout
+    }, 15000);
   };
 
-  // Fetch initial messages from API
   useEffect(() => {
     if (chatId) {
       fetchMessages(chatId);
     }
   }, [chatId]);
 
-  // Function to fetch messages from API
   const fetchMessages = async (chatId: string, page: number = 1) => {
     try {
       setIsLoadingMessages(true);
       const response = await getChatMessages(chatId, page, messagesPerPage);
 
       const apiMessages = response.messages;
-      setTotalMessages(response.total);
-
-      // Check if there are more messages to load
       setHasMoreMessages(page * messagesPerPage < response.total);
 
-      // Convert API messages to ChatMessage format
       const formattedMessages = apiMessages.map(
         (msg: ApiMessage): ChatMessage => ({
           id: msg.id,
@@ -342,13 +258,10 @@ const ChatScreen = () => {
       );
 
       if (page === 1) {
-        // First page, replace existing messages
         setMessages(formattedMessages);
       } else {
-        // For loading more messages (pagination), set the flag to prevent auto-scrolling
         setIsLoadingMoreMessages(true);
 
-        // Subsequent pages, prepend to existing messages
         setMessages((prevMessages) => [...formattedMessages, ...prevMessages]);
       }
 
@@ -361,10 +274,8 @@ const ChatScreen = () => {
     }
   };
 
-  // Load more messages when explicitly requested
   const handleLoadMoreMessages = () => {
     if (hasMoreMessages && !isLoadingMessages && chatId && isAtTop) {
-      // Set the flag to prevent auto-scrolling when more messages are loaded
       setIsLoadingMoreMessages(true);
       fetchMessages(chatId, messagePage + 1);
     }
@@ -373,35 +284,26 @@ const ChatScreen = () => {
   useEffect(() => {
     const initChat = async () => {
       try {
-        // First ensure the socket is connected
         if (!socketManager.isConnected()) {
           console.log(
             "Socket not connected during initChat, connecting first...",
           );
           await socketManager.connect();
-          // Add a small delay to ensure connection is established
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
 
         if (!chatId && !route.params?.chatId) {
-          // Creating a new chat
           console.log("Creating new chat session...");
-          // Generate a temporary ID for new chat
           const tempChatId = "chat-" + Date.now().toString();
 
-          // Clear messages when creating a new chat
           setMessages([]);
-          setConversationHistory([]);
 
-          // Set the new chat ID
           setChatId(tempChatId);
 
           console.log(`New chat created with ID: ${tempChatId}`);
 
-          // Double check that socket is connected before joining
           if (socketManager.isConnected()) {
             console.log(`Socket is connected, joining new room: ${tempChatId}`);
-            // Add delay before joining to ensure connection is ready
             setTimeout(() => {
               socketManager.joinRoom(tempChatId);
             }, 500);
@@ -420,24 +322,19 @@ const ChatScreen = () => {
             }
           }
         } else if (route.params?.chatId) {
-          // Joining existing chat
           const existingChatId = route.params.chatId;
 
-          // Clear previous messages when changing chat
           if (chatId !== existingChatId) {
             console.log(`Changing chat from ${chatId} to ${existingChatId}`);
             setMessages([]);
-            setConversationHistory([]);
           }
 
           setChatId(existingChatId);
 
-          // Only try to join room if socket is connected
           if (socketManager.isConnected()) {
             console.log(
               `Socket is connected, joining existing room: ${existingChatId}`,
             );
-            // Add delay before joining to ensure connection is ready
             setTimeout(() => {
               socketManager.joinRoom(existingChatId);
             }, 500);
@@ -448,7 +345,6 @@ const ChatScreen = () => {
           }
         }
 
-        // Set socket connected state to match actual connection status
         setSocketConnected(socketManager.isConnected());
       } catch (error) {
         console.error("Error in initChat:", error);
@@ -458,7 +354,6 @@ const ChatScreen = () => {
     initChat();
   }, [chatId, route.params?.chatId]);
 
-  // Handle socket connection changes - this helps ensure we join the room when socket connects
   useEffect(() => {
     if (socketConnected && chatId) {
       console.log(
@@ -472,191 +367,6 @@ const ChatScreen = () => {
     {},
   );
 
-  const renderItem = ({ item }: { item: ChatMessage }) => {
-    // Get loading states for images and thumbnails
-    const imageLoading = loadingStates[item.id] ?? true;
-    const thumbnailLoading = loadingStates[item.id + "-thumbnail"] ?? true;
-
-    // Function to update loading state when images/thumbnails are loaded
-    const handleImageLoad = (id: string) => {
-      setLoadingStates((prev) => ({ ...prev, [id]: false }));
-    };
-
-    // Regex patterns for detecting media and links
-    const urlPattern = /(https?:\/\/[^\s]+)/g;
-    const imagePattern =
-      /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|gif))(?=[\s)]|$)/i;
-    const pdfPattern = /(https?:\/\/[^\s)]+?\.pdf)(?=[\s)]|$)/i;
-    const boldPattern = /\*\*(.*?)\*\*/g;
-    const emojiPattern = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
-
-    // Process text for links, bold text, and images
-    const textWithMedia = (item.text || item.message || "")
-      .split(urlPattern)
-      .map((part: string, index: number) => {
-        if (imagePattern.test(part)) {
-          const match = part.match(imagePattern);
-          if (match) {
-            const cleanImageUrl = match[1];
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => Linking.openURL(cleanImageUrl)}
-              >
-                <View>
-                  {imageLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#00ff00"
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        zIndex: 1,
-                      }}
-                    />
-                  )}
-                  <Image
-                    source={{ uri: cleanImageUrl }}
-                    style={styles.chatImage}
-                    onLoad={() => handleImageLoad(item.id)} // Hide loader when image loads
-                  />
-                </View>
-              </TouchableOpacity>
-            );
-          }
-        } else if (pdfPattern.test(part)) {
-          return (
-            <TouchableOpacity
-              key={index}
-              style={styles.linkContainer}
-              onPress={() => Linking.openURL(part)}
-            >
-              <Text style={[styles.link, styles.boldText]}>📄 Open PDF</Text>
-            </TouchableOpacity>
-          );
-        } else if (urlPattern.test(part)) {
-          return (
-            <TouchableOpacity
-              key={index}
-              style={styles.linkContainer}
-              onPress={() => Linking.openURL(part)}
-            >
-              <Text style={styles.link}>{part}</Text>
-            </TouchableOpacity>
-          );
-        } else if (boldPattern.test(part)) {
-          const boldText = part.replace(
-            boldPattern,
-            (_match: string, p1: string) => p1,
-          );
-          return (
-            <Text key={index} style={[styles.messageText, styles.boldText]}>
-              {boldText}
-            </Text>
-          );
-        } else if (emojiPattern.test(part)) {
-          return (
-            <Text key={index} style={styles.messageText}>
-              {part}
-            </Text>
-          );
-        }
-
-        return (
-          <Text key={index} style={styles.messageText}>
-            {part}
-          </Text>
-        );
-      });
-
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          item.sender === "user" ? styles.userMessage : styles.botMessage,
-        ]}
-      >
-        {/* Render processed text with media */}
-        {textWithMedia}
-
-        {/* Display YouTube video with clickable link and thumbnail */}
-        {item.youtubeVideo && (
-          <View style={styles.youtubeContainer}>
-            {/* Clickable YouTube Link */}
-            <TouchableOpacity
-              onPress={() => Linking.openURL(item.youtubeVideo!.link)}
-            >
-              <Text style={styles.link}>▶ {item.youtubeVideo.title}</Text>
-            </TouchableOpacity>
-
-            {/* Clickable YouTube Thumbnail with Loading Animation */}
-            <TouchableOpacity
-              onPress={() => Linking.openURL(item.youtubeVideo!.link)}
-              style={styles.youtubeThumbnailContainer}
-            >
-              <View>
-                {thumbnailLoading && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#FF0000"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      zIndex: 1,
-                    }}
-                  />
-                )}
-                <Image
-                  source={{ uri: item.youtubeVideo.thumbnail }}
-                  style={styles.youtubeThumbnail}
-                  onLoad={() => handleImageLoad(item.id + "-thumbnail")} // Hide loader when thumbnail loads
-                />
-              </View>
-              {/* Play Button Overlay */}
-              <View style={styles.youtubePlayButton}>
-                <Text style={styles.playButtonText}>▶</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Display images from SerpAPI with Loading Animation */}
-        {item.images && item.images.length > 0 && (
-          <View style={styles.imageContainer}>
-            {item.images.map((img: string, index: number) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => Linking.openURL(img)}
-              >
-                <View>
-                  {imageLoading && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#00ff00"
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        zIndex: 1,
-                      }}
-                    />
-                  )}
-                  <Image
-                    source={{ uri: img }}
-                    style={styles.chatImage}
-                    onLoad={() => handleImageLoad(item.id)} // Hide loader when image loads
-                  />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-    );
-  };
-
   const scrollToBottom = () => {
     if (flatListRef.current && !isLoadingMoreMessages) {
       setTimeout(() => {
@@ -665,7 +375,6 @@ const ChatScreen = () => {
     }
   };
 
-  // Connect to socket on component mount - do this early
   useEffect(() => {
     console.log("Initializing socket connection on component mount");
     socketManager
@@ -677,34 +386,27 @@ const ChatScreen = () => {
         console.error("Failed to pre-connect socket:", error);
       });
 
-    return () => {
-      // No need to disconnect here as we'll do it in the main cleanup
-    };
+    return () => {};
   }, []);
 
-  // Handle sending message with timeout for response
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
     if (selectedImage) {
-      // If we have an image, send it with the text
       await handleImageMessage(selectedImage, inputText);
       setSelectedImage(null);
       setInputText("");
       return;
     }
 
-    // Ensure we have an active socket connection before sending
     if (!socketManager.isConnected()) {
       console.log(
         "Socket not connected. Reconnecting before sending message...",
       );
       try {
         await socketManager.connect();
-        // Ensure we're in the right room
         if (chatId) {
           socketManager.joinRoom(chatId);
-          // Give it a moment to connect
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
       } catch (error) {
@@ -717,7 +419,6 @@ const ChatScreen = () => {
       }
     }
 
-    // If no image, just send text as usual
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       text: inputText,
@@ -729,20 +430,15 @@ const ChatScreen = () => {
       return;
     }
 
-    // Store current message for debugging
     const currentMessage = inputText;
     console.log(`Sending message: "${currentMessage}"`);
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setConversationHistory((prevHistory) => [...prevHistory, newMessage]); // Store in history
     setInputText("");
-    setIsTyping(true);
 
-    // If socket is connected, send the message through socket
     if (socketConnected && socketManager.isConnected()) {
       socketManager.sendMessage(inputText);
 
-      // Show typing indicator
       const typingId = `typing-${Date.now()}`;
       const typingMessage: ChatMessage = {
         id: typingId,
@@ -751,16 +447,13 @@ const ChatScreen = () => {
       };
       setMessages((prevMessages) => [...prevMessages, typingMessage]);
 
-      // Set a timeout to handle case when no response comes back
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
 
-      // Create a function to check for response that we can call and cancel
       const checkForResponse = () => {
         console.log(`Checking timeout for message: "${currentMessage}"`);
-        // Check if typing indicator still exists (no response received)
         setMessages((prevMessages) => {
           const typingExists = prevMessages.some((msg) => msg.id === typingId);
 
@@ -768,7 +461,6 @@ const ChatScreen = () => {
             console.log(
               "No response received within timeout period, showing error message",
             );
-            // Replace typing indicator with error message
             return prevMessages.map((msg) =>
               msg.id === typingId
                 ? {
@@ -782,9 +474,6 @@ const ChatScreen = () => {
           return prevMessages;
         });
 
-        setIsTyping(false);
-
-        // Try to reconnect socket
         console.log("Attempting to reconnect socket after timeout");
         socketManager.disconnect();
         socketManager
@@ -801,15 +490,12 @@ const ChatScreen = () => {
         messageTimeoutRef.current = null;
       };
 
-      messageTimeoutRef.current = setTimeout(checkForResponse, 30000); // 30 second timeout (increased from 15s)
-
-      // The response will come through the socket connection
+      messageTimeoutRef.current = setTimeout(checkForResponse, 30000);
     } else {
       Alert.alert(
         "Connection Error",
         "Failed to send message. Please check your connection and try again.",
       );
-      setIsTyping(false);
     }
   };
 
@@ -817,9 +503,8 @@ const ChatScreen = () => {
     if (!isUserScrolling) {
       scrollToBottom();
     }
-  }, [messages]); // Runs every time a new message is added
+  }, [messages]);
 
-  // Clear timeout when component unmounts
   useEffect(() => {
     return () => {
       if (messageTimeoutRef.current) {
@@ -829,19 +514,16 @@ const ChatScreen = () => {
     };
   }, []);
 
-  // Watch socket connection status to reset timeouts when reconnected
   useEffect(() => {
     if (socketConnected) {
       console.log(
         "Socket connected/reconnected - clearing any pending timeouts",
       );
-      // Clear any pending timeouts when socket reconnects
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
 
-      // Also remove typing indicators from UI when socket reconnects
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
           (msg) => !msg.id.startsWith("typing"),
@@ -857,11 +539,9 @@ const ChatScreen = () => {
     }
   }, [socketConnected]);
 
-  // Main useEffect for socket connection and chat room handling
   useEffect(() => {
     const connectToSocket = async () => {
       try {
-        // Check if socket is already connected, connect if not
         if (!socketManager.isConnected()) {
           console.log("Connecting to socket in main useEffect");
           await socketManager.connect();
@@ -874,26 +554,21 @@ const ChatScreen = () => {
           console.log(`Joining room: ${route.params.chatId}`);
           socketManager.joinRoom(route.params.chatId);
 
-          // Clear any existing message listeners before adding new ones
           socketManager.offMessage();
 
-          // Listen for socket messages
           socketManager.onMessage((messageData) => {
             console.log("Received socket message:", messageData);
 
-            // Clear any pending timeout when we receive a message
             if (messageTimeoutRef.current) {
               console.log("Clearing timeout - response received");
               clearTimeout(messageTimeoutRef.current);
               messageTimeoutRef.current = null;
             }
 
-            // If the message is from the user or the bot, handle appropriately
             if (messageData.senderId) {
               const isBot =
                 messageData.senderId === "00000000-0000-0000-0000-000000000000";
 
-              // For bot messages, remove typing indicators
               if (isBot) {
                 console.log(
                   "Removing typing indicators - bot message received",
@@ -903,7 +578,6 @@ const ChatScreen = () => {
                     (msg) => !msg.id.startsWith("typing"),
                   );
 
-                  // Log if indicators were actually removed
                   const removedCount =
                     prevMessages.length - updatedMessages.length;
                   if (removedCount > 0) {
@@ -916,9 +590,7 @@ const ChatScreen = () => {
                 });
               }
 
-              // Add message to state if it's not already there
               setMessages((prevMessages) => {
-                // Check if this message already exists in our state
                 const messageExists = prevMessages.some(
                   (msg) =>
                     (msg.id && msg.id === messageData.id) ||
@@ -960,7 +632,6 @@ const ChatScreen = () => {
       }
     };
 
-    // Setup event listeners for socket state changes
     const onReconnected = () => {
       console.log("SOCKET RECONNECTED - Clearing timeouts and indicators");
       if (messageTimeoutRef.current) {
@@ -968,12 +639,10 @@ const ChatScreen = () => {
         messageTimeoutRef.current = null;
       }
 
-      // Remove typing indicators
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => !msg.id.startsWith("typing")),
       );
 
-      // Ensure we are in the right room
       if (chatId) {
         socketManager.joinRoom(chatId);
       }
@@ -981,39 +650,33 @@ const ChatScreen = () => {
 
     const onAuthenticated = () => {
       console.log("SOCKET AUTHENTICATED");
-      // Clear timeouts here too as a safety measure
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
     };
 
-    // Register event listeners
     socketManager.events.on("reconnected", onReconnected);
     socketManager.events.on("authenticated", onAuthenticated);
     socketManager.events.on("connected", onReconnected);
 
     connectToSocket();
 
-    // Setup periodic check for socket connection
     const connectionCheckInterval = setInterval(() => {
       if (!socketManager.isConnected() && chatId) {
         console.log("Socket disconnected, attempting to reconnect...");
         connectToSocket();
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
-    // Cleanup socket connection on unmount
     return () => {
       clearInterval(connectionCheckInterval);
-      // Remove event listeners
       socketManager.events.off("reconnected", onReconnected);
       socketManager.events.off("authenticated", onAuthenticated);
       socketManager.events.off("connected", onReconnected);
 
-      socketManager.offMessage(); // Remove message listener
+      socketManager.offMessage();
 
-      // Only disconnect if not using socket elsewhere
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
@@ -1021,144 +684,8 @@ const ChatScreen = () => {
     };
   }, [route.params?.chatId, chatId]);
 
-  // Update sendMessage to use the API structure
-  const sendMessage = async (text: string, imageUri?: string) => {
-    try {
-      console.log("Attempting to send message...");
-
-      // Ensure we have a valid chat ID
-      if (!chatId) {
-        console.error("Cannot send message: No valid chat ID");
-        return;
-      }
-
-      // Check if socket is connected, attempt to connect if not
-      if (!socketManager.isConnected()) {
-        console.log(
-          "Socket not connected, attempting to connect before sending...",
-        );
-        try {
-          await socketManager.connect();
-          socketManager.joinRoom(chatId);
-          setSocketConnected(true);
-        } catch (socketError) {
-          console.error("Failed to connect socket:", socketError);
-          Alert.alert(
-            "Connection Error",
-            "Cannot connect to chat server. Please check your connection and try again.",
-          );
-          return;
-        }
-      }
-
-      const newMessage: ChatMessage = {
-        id: `temp-${Date.now()}`,
-        text,
-        sender: "user",
-        timestamp: new Date(),
-      };
-
-      // Add user message to the UI immediately
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-      // Clear any existing timeouts
-      if (messageTimeoutRef.current) {
-        clearTimeout(messageTimeoutRef.current);
-      }
-
-      // Store message in AsyncStorage if we have a valid chat ID
-      if (chatId) {
-        try {
-          // Add the message to chat history in AsyncStorage
-          const chatHistory = await AsyncStorage.getItem(`chat_${chatId}`);
-          const messages = chatHistory ? JSON.parse(chatHistory) : [];
-          messages.push(newMessage);
-          await AsyncStorage.setItem(
-            `chat_${chatId}`,
-            JSON.stringify(messages),
-          );
-        } catch (storageError) {
-          console.error("Failed to save message to storage:", storageError);
-        }
-      }
-
-      console.log(`Sending message to room ${chatId}`);
-
-      // Add typing indicator
-      const typingIndicator: ChatMessage = {
-        id: `typing-${Date.now()}`,
-        text: "...",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-
-      setMessages((prevMessages) => [...prevMessages, typingIndicator]);
-
-      // Format the message according to the API structure
-      const apiMessage = {
-        content: text,
-        chatId: chatId,
-      };
-
-      // Send the message via socket
-      if (imageUri) {
-        console.log("Sending message with image:", { text, imageUri });
-        const base64Data = await getBase64FromUri(imageUri);
-        if (!base64Data) {
-          console.error("Failed to get image data for message");
-          return;
-        }
-
-        socketManager.sendMessage(
-          JSON.stringify({
-            text,
-            image: base64Data,
-            chatId,
-            type: "image",
-          }),
-        );
-      } else {
-        console.log("Sending text message:", text);
-        socketManager.sendMessage(text);
-      }
-
-      // Set a timeout to detect if no response comes back
-      messageTimeoutRef.current = setTimeout(() => {
-        console.log("Message response timeout reached (30s)");
-
-        // Remove typing indicators
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => !msg.id.startsWith("typing")),
-        );
-
-        // Add a system message indicating the timeout
-        const timeoutMessage: ChatMessage = {
-          id: `timeout-${Date.now()}`,
-          text: "The server is taking longer than expected to respond. Please wait or try again later.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-
-        setMessages((prevMessages) => [...prevMessages, timeoutMessage]);
-
-        // Clear the timeout ref
-        messageTimeoutRef.current = null;
-
-        // Try to reconnect the socket - use connect() instead of reconnect()
-        socketManager.connect().catch((error) => {
-          console.error("Failed to reconnect socket after timeout:", error);
-        });
-      }, 30000); // 30 second timeout
-    } catch (error) {
-      console.error("Error sending message:", error);
-      Alert.alert("Error", "Failed to send message. Please try again.");
-    }
-  };
-
-  // Use effect to maintain scroll position after loading more messages
   useEffect(() => {
     if (isLoadingMoreMessages && !isLoadingMessages) {
-      // Reset flag after a short delay to ensure messages are rendered
       setTimeout(() => {
         setIsLoadingMoreMessages(false);
       }, 500);
@@ -1184,7 +711,6 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Show load more button when at top and has more messages */}
         {isAtTop && hasMoreMessages && (
           <TouchableOpacity
             style={[
@@ -1235,11 +761,10 @@ const ChatScreen = () => {
           onScrollBeginDrag={() => setIsUserScrolling(true)}
           onScroll={(event) => {
             const currentY = event.nativeEvent.contentOffset.y;
-            setScrollY(currentY);
             setIsAtTop(currentY < 20);
           }}
           onMomentumScrollEnd={() => {
-            setIsUserScrolling(false); // Re-enable auto-scroll when user stops
+            setIsUserScrolling(false);
           }}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
@@ -1299,7 +824,6 @@ const ChatScreen = () => {
           )}
         </View>
 
-        {/* Media options modal */}
         <Modal
           transparent={true}
           visible={showMediaOptions}
@@ -1377,11 +901,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   youtubeThumbnail: {
-    width: "100%", // Makes it responsive
-    aspectRatio: 16 / 9, // Ensures proper YouTube thumbnail aspect ratio
+    width: "100%",
+    aspectRatio: 16 / 9,
     borderRadius: 8,
     marginTop: 5,
-    resizeMode: "cover", // Ensures the image covers the entire area
+    resizeMode: "cover",
   },
   youtubePlayButton: {
     position: "absolute",
@@ -1456,7 +980,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 5,
     borderRadius: 16,
-    backgroundColor: "#95ff77", // Same color as bot messages
+    backgroundColor: "#95ff77",
     maxWidth: "80%",
   },
   linkContainer: {
@@ -1466,8 +990,8 @@ const styles = StyleSheet.create({
     zIndex: 100,
     fontFamily: "Aeonik",
     fontSize: 16,
-    color: "#0066cc", // Blue color for links
-    textDecorationLine: "underline", // Underline for links
+    color: "#0066cc",
+    textDecorationLine: "underline",
   },
   inputContainer: {
     flexDirection: "row",

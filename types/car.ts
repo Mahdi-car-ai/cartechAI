@@ -1,4 +1,3 @@
-// Define car makes interface
 export interface CarMake {
   MakeId: number;
   MakeName: string;
@@ -6,7 +5,6 @@ export interface CarMake {
   VehicleTypeName: string;
 }
 
-// Define car models interface
 export interface CarModel {
   Make_ID: number;
   Make_Name: string;
@@ -14,14 +12,12 @@ export interface CarModel {
   Model_Name: string;
 }
 
-// Define generic select option interface
 export interface SelectOption {
   id: string | number;
   name: string;
   description?: string;
 }
 
-// Define car details interface
 export interface CarDetails {
   make: string;
   model: string;
@@ -36,11 +32,5 @@ export interface CarDetails {
   bodyClass: string;
   plantCity: string;
   plantCountry: string;
-  [key: string]: string; // Index signature for dynamic access
+  [key: string]: string;
 }
-
-// Define navigation types
-export type RootStackParamList = {
-  ChatScreen: { carDetails: CarDetails; chatId?: string };
-  [key: string]: undefined | object;
-}; 

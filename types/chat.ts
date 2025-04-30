@@ -1,10 +1,20 @@
-/**
- * Type definitions for Cartechai application
- */
+export interface ChatItem {
+  id: string;
+  type: string;
+  createdAt: string;
+}
 
-/**
- * Chat message interface
- */
+export interface CategorizedChats {
+  Today: ChatItem[];
+  Yesterday: ChatItem[];
+  "3 days ago": ChatItem[];
+  "4 days ago": ChatItem[];
+  "5 days ago": ChatItem[];
+  "6 days ago": ChatItem[];
+  "Last Week": ChatItem[];
+  [key: string]: ChatItem[];
+}
+
 export interface ChatMessage {
   id: string;
   text?: string;
@@ -16,14 +26,12 @@ export interface ChatMessage {
     link: string;
     thumbnail: string;
   } | null;
+  timestamp?: Date;
   [key: string]: any;
 }
 
-/**
- * Props for the RenderChat component
- */
 export interface RenderChatProps {
   item: ChatMessage;
   loadingStates: Record<string, boolean>;
   setLoadingStates: (prev: Record<string, boolean>) => void;
-} 
+}
