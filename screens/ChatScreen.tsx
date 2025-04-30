@@ -24,6 +24,29 @@ import * as ImagePicker from "expo-image-picker";
 import Voice from "@react-native-voice/voice";
 import socketManager from "@/services/SocketManager";
 import { CarDetails } from "@/types/CarDetails";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from 'expo-file-system';
+
+// Function to convert image URI to base64
+const getBase64FromUri = async (uri: string): Promise<string | null> => {
+  try {
+    // Check if the URI is valid
+    if (!uri || !uri.startsWith('file://')) {
+      console.error('Invalid URI format for image conversion:', uri);
+      return null;
+    }
+
+    // Read the file as base64
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    return base64 ? `data:image/jpeg;base64,${base64}` : null;
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    return null;
+  }
+};
 
 // Define types for the chat message
 interface ChatMessage {
@@ -64,7 +87,7 @@ const ChatScreen = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
 
-  // Add timeout reference for message response
+  // Create ref for message timeout
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialization for voice recognition
@@ -272,39 +295,91 @@ const ChatScreen = () => {
 
   useEffect(() => {
     const initChat = async () => {
-      if (!chatId && !route.params?.chatId) {
-        // Create chat through socket instead of Firebase
-        if (socketConnected && socketManager.isConnected()) {
-          // TODO: Implement chat creation through your backend
-          // For now, we'll use a temporary ID
+      try {
+        // First ensure the socket is connected
+        if (!socketManager.isConnected()) {
+          console.log("Socket not connected during initChat, connecting first...");
+          await socketManager.connect();
+          // Add a small delay to ensure connection is established
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        if (!chatId && !route.params?.chatId) {
+          // Creating a new chat
+          console.log("Creating new chat session...");
+          // Generate a temporary ID for new chat
           const tempChatId = "chat-" + Date.now().toString();
-
+          
           // Clear messages when creating a new chat
           setMessages([]);
           setConversationHistory([]);
-
+          
+          // Set the new chat ID
           setChatId(tempChatId);
-
-          // Join the chat room
-          socketManager.joinRoom(tempChatId);
-
-          // First message from bot will come through the socket connection
+          
+          console.log(`New chat created with ID: ${tempChatId}`);
+          
+          // Double check that socket is connected before joining
+          if (socketManager.isConnected()) {
+            console.log(`Socket is connected, joining new room: ${tempChatId}`);
+            // Add delay before joining to ensure connection is ready
+            setTimeout(() => {
+              socketManager.joinRoom(tempChatId);
+            }, 500);
+          } else {
+            console.error("Socket not connected after connect attempt, cannot join new chat room");
+            try {
+              console.log("Trying one more connect attempt for new chat");
+              await socketManager.connect();
+              setTimeout(() => {
+                socketManager.joinRoom(tempChatId);
+              }, 500);
+            } catch (error) {
+              console.error("Failed second connect attempt:", error);
+            }
+          }
+        } else if (route.params?.chatId) {
+          // Joining existing chat
+          const existingChatId = route.params.chatId;
+          
+          // Clear previous messages when changing chat
+          if (chatId !== existingChatId) {
+            console.log(`Changing chat from ${chatId} to ${existingChatId}`);
+            setMessages([]);
+            setConversationHistory([]);
+          }
+          
+          setChatId(existingChatId);
+          
+          // Only try to join room if socket is connected
+          if (socketManager.isConnected()) {
+            console.log(`Socket is connected, joining existing room: ${existingChatId}`);
+            // Add delay before joining to ensure connection is ready
+            setTimeout(() => {
+              socketManager.joinRoom(existingChatId);
+            }, 500);
+          } else {
+            console.log("Socket not connected, will join room when socket connects");
+          }
         }
-      } else if (route.params?.chatId) {
-        // Clear previous messages when changing chat
-        if (chatId !== route.params.chatId) {
-          setMessages([]);
-          setConversationHistory([]);
-        }
-
-        setChatId(route.params.chatId);
-        // If we have a chat ID, we'll join the room and previous messages
-        // will be loaded through socket connection
+        
+        // Set socket connected state to match actual connection status
+        setSocketConnected(socketManager.isConnected());
+      } catch (error) {
+        console.error("Error in initChat:", error);
       }
     };
 
     initChat();
-  }, [chatId, route.params?.chatId, socketConnected]);
+  }, [chatId, route.params?.chatId]);
+
+  // Handle socket connection changes - this helps ensure we join the room when socket connects
+  useEffect(() => {
+    if (socketConnected && chatId) {
+      console.log(`Socket is now connected. Ensuring we are in room: ${chatId}`);
+      socketManager.joinRoom(chatId);
+    }
+  }, [socketConnected, chatId]);
 
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {},
@@ -503,136 +578,21 @@ const ChatScreen = () => {
     }
   };
 
-  // Connect to socket when component mounts
+  // Connect to socket on component mount - do this early
   useEffect(() => {
-    const connectToSocket = async () => {
-      try {
-        await socketManager.connect();
-        setSocketConnected(true);
-
-        if (route.params?.chatId) {
-          socketManager.joinRoom(route.params.chatId);
-
-          // Clear any existing message listeners before adding new ones
-          socketManager.offMessage();
-
-          // Listen for socket messages
-          socketManager.onMessage((messageData) => {
-            console.log("Received socket message:", messageData);
-
-            // Clear any pending timeout when we receive a message
-            if (messageTimeoutRef.current) {
-              clearTimeout(messageTimeoutRef.current);
-              messageTimeoutRef.current = null;
-            }
-
-            // If the message is from the bot (senderId is 00000000-0000-0000-0000-000000000000)
-            if (
-              messageData.senderId === "00000000-0000-0000-0000-000000000000"
-            ) {
-              // Remove typing indicator if exists
-              setMessages((prevMessages) =>
-                prevMessages.filter((msg) => !msg.id.startsWith("typing")),
-              );
-
-              // Add message to state if it's not already there
-              setMessages((prevMessages) => {
-                const messageExists = prevMessages.some(
-                  (msg) =>
-                    msg.id === messageData.id ||
-                    (msg.text === messageData.content && msg.sender === "bot"),
-                );
-
-                if (!messageExists) {
-                  return [
-                    ...prevMessages,
-                    {
-                      id: messageData.id || Date.now().toString(),
-                      text: messageData.content,
-                      sender: "bot",
-                      timestamp: messageData.timestamp
-                        ? new Date(messageData.timestamp)
-                        : new Date(),
-                    },
-                  ];
-                }
-                return prevMessages;
-              });
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error connecting to socket:", error);
-        Alert.alert(
-          "Connection Error",
-          "Failed to connect to chat server. Some features may not work properly.",
-        );
-      }
-    };
-
-    connectToSocket();
-
-    // Cleanup socket connection on unmount
+    console.log("Initializing socket connection on component mount");
+    socketManager.connect()
+      .then(() => {
+        console.log("Socket pre-connected successfully");
+      })
+      .catch(error => {
+        console.error("Failed to pre-connect socket:", error);
+      });
+    
     return () => {
-      socketManager.offMessage(); // Remove message listener
-      socketManager.disconnect();
-      if (messageTimeoutRef.current) {
-        clearTimeout(messageTimeoutRef.current);
-      }
+      // No need to disconnect here as we'll do it in the main cleanup
     };
-  }, [route.params?.chatId]);
-
-  // Load previous messages when chat ID changes
-  useEffect(() => {
-    const loadPreviousMessages = async () => {
-      if (!chatId || !socketConnected) return;
-
-      try {
-        // Request previous messages from the server
-        // This assumes your socket service has a method to request chat history
-        // If it doesn't, you'll need to implement this on the backend and client
-        if (socketManager.isConnected()) {
-          // Request chat history from socket/backend
-          socketManager.emit("getChatHistory", { chatId });
-
-          // You should handle the response in the onMessage listener
-          // by adding a specific handler for history messages
-          socketManager.once(
-            "chatHistory",
-            (historyData: {
-              messages: Array<{
-                id?: string;
-                content: string;
-                senderId?: string;
-                timestamp?: string;
-              }>;
-            }) => {
-              if (historyData && Array.isArray(historyData.messages)) {
-                const formattedMessages = historyData.messages.map((msg) => ({
-                  id: msg.id || Date.now().toString(),
-                  text: msg.content,
-                  sender:
-                    msg.senderId === "00000000-0000-0000-0000-000000000000"
-                      ? "bot"
-                      : "user",
-                  timestamp: msg.timestamp
-                    ? new Date(msg.timestamp)
-                    : new Date(),
-                }));
-
-                setMessages(formattedMessages);
-                setConversationHistory(formattedMessages);
-              }
-            },
-          );
-        }
-      } catch (error) {
-        console.error("Error loading previous messages:", error);
-      }
-    };
-
-    loadPreviousMessages();
-  }, [chatId, socketConnected]);
+  }, []);
 
   // Handle sending message with timeout for response
   const handleSend = async () => {
@@ -646,6 +606,27 @@ const ChatScreen = () => {
       return;
     }
 
+    // Ensure we have an active socket connection before sending
+    if (!socketManager.isConnected()) {
+      console.log("Socket not connected. Reconnecting before sending message...");
+      try {
+        await socketManager.connect();
+        // Ensure we're in the right room
+        if (chatId) {
+          socketManager.joinRoom(chatId);
+          // Give it a moment to connect
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      } catch (error) {
+        console.error("Failed to reconnect socket before sending:", error);
+        Alert.alert(
+          "Connection Error",
+          "Cannot connect to chat server. Please try again later.",
+        );
+        return;
+      }
+    }
+
     // If no image, just send text as usual
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -657,6 +638,10 @@ const ChatScreen = () => {
       console.error("Chat ID is missing. Cannot store messages.");
       return;
     }
+
+    // Store current message for debugging
+    const currentMessage = inputText;
+    console.log(`Sending message: "${currentMessage}"`);
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setConversationHistory((prevHistory) => [...prevHistory, newMessage]); // Store in history
@@ -679,14 +664,18 @@ const ChatScreen = () => {
       // Set a timeout to handle case when no response comes back
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
       }
 
-      messageTimeoutRef.current = setTimeout(() => {
+      // Create a function to check for response that we can call and cancel
+      const checkForResponse = () => {
+        console.log(`Checking timeout for message: "${currentMessage}"`);
         // Check if typing indicator still exists (no response received)
         setMessages((prevMessages) => {
           const typingExists = prevMessages.some((msg) => msg.id === typingId);
 
           if (typingExists) {
+            console.log("No response received within timeout period, showing error message");
             // Replace typing indicator with error message
             return prevMessages.map((msg) =>
               msg.id === typingId
@@ -704,6 +693,7 @@ const ChatScreen = () => {
         setIsTyping(false);
 
         // Try to reconnect socket
+        console.log("Attempting to reconnect socket after timeout");
         socketManager.disconnect();
         socketManager
           .connect()
@@ -715,7 +705,11 @@ const ChatScreen = () => {
           .catch((error) => {
             console.error("Failed to reconnect socket:", error);
           });
-      }, 15000); // 15 second timeout
+
+        messageTimeoutRef.current = null;
+      };
+
+      messageTimeoutRef.current = setTimeout(checkForResponse, 30000); // 30 second timeout (increased from 15s)
 
       // The response will come through the socket connection
     } else {
@@ -738,9 +732,310 @@ const ChatScreen = () => {
     return () => {
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
       }
     };
   }, []);
+
+  // Watch socket connection status to reset timeouts when reconnected
+  useEffect(() => {
+    if (socketConnected) {
+      console.log("Socket connected/reconnected - clearing any pending timeouts");
+      // Clear any pending timeouts when socket reconnects
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+      
+      // Also remove typing indicators from UI when socket reconnects
+      setMessages((prevMessages) => {
+        const updatedMessages = prevMessages.filter((msg) => !msg.id.startsWith("typing"));
+        const removedCount = prevMessages.length - updatedMessages.length;
+        if (removedCount > 0) {
+          console.log(`Removed ${removedCount} stale typing indicators after reconnect`);
+        }
+        return updatedMessages;
+      });
+    }
+  }, [socketConnected]);
+
+  // Main useEffect for socket connection and chat room handling
+  useEffect(() => {
+    const connectToSocket = async () => {
+      try {
+        // Check if socket is already connected, connect if not
+        if (!socketManager.isConnected()) {
+          console.log("Connecting to socket in main useEffect");
+          await socketManager.connect();
+        }
+        
+        setSocketConnected(true);
+        console.log(`Chat ID from route: ${route.params?.chatId}`);
+
+        if (route.params?.chatId) {
+          console.log(`Joining room: ${route.params.chatId}`);
+          socketManager.joinRoom(route.params.chatId);
+
+          // Clear any existing message listeners before adding new ones
+          socketManager.offMessage();
+
+          // Listen for socket messages
+          socketManager.onMessage((messageData) => {
+            console.log("Received socket message:", messageData);
+
+            // Clear any pending timeout when we receive a message
+            if (messageTimeoutRef.current) {
+              console.log("Clearing timeout - response received");
+              clearTimeout(messageTimeoutRef.current);
+              messageTimeoutRef.current = null;
+            }
+
+            // If the message is from the user or the bot, handle appropriately
+            if (messageData.senderId) {
+              const isBot = messageData.senderId === "00000000-0000-0000-0000-000000000000";
+              
+              // For bot messages, remove typing indicators
+              if (isBot) {
+                console.log("Removing typing indicators - bot message received");
+                setMessages((prevMessages) => {
+                  const updatedMessages = prevMessages.filter((msg) => !msg.id.startsWith("typing"));
+                  
+                  // Log if indicators were actually removed
+                  const removedCount = prevMessages.length - updatedMessages.length;
+                  if (removedCount > 0) {
+                    console.log(`Removed ${removedCount} typing indicators`);
+                  } else {
+                    console.log("No typing indicators found to remove");
+                  }
+                  
+                  return updatedMessages;
+                });
+              }
+
+              // Add message to state if it's not already there
+              setMessages((prevMessages) => {
+                // Check if this message already exists in our state
+                const messageExists = prevMessages.some(
+                  (msg) =>
+                    (msg.id && msg.id === messageData.id) ||
+                    (msg.text === messageData.content && 
+                     msg.sender === (isBot ? "bot" : "user"))
+                );
+                
+                if (!messageExists) {
+                  console.log(`Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`);
+                  return [
+                    ...prevMessages,
+                    {
+                      id: messageData.id || `msg-${Date.now()}`,
+                      text: messageData.content,
+                      sender: isBot ? "bot" : "user",
+                      timestamp: messageData.timestamp
+                        ? new Date(messageData.timestamp)
+                        : new Date(),
+                    },
+                  ];
+                } else {
+                  console.log(`Message already exists in UI: ${messageData.content}`);
+                }
+                return prevMessages;
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error connecting to socket:", error);
+        Alert.alert(
+          "Connection Error",
+          "Failed to connect to chat server. Some features may not work properly.",
+        );
+      }
+    };
+
+    // Setup event listeners for socket state changes
+    const onReconnected = () => {
+      console.log('SOCKET RECONNECTED - Clearing timeouts and indicators');
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+      
+      // Remove typing indicators
+      setMessages((prevMessages) => 
+        prevMessages.filter((msg) => !msg.id.startsWith("typing"))
+      );
+      
+      // Ensure we are in the right room
+      if (chatId) {
+        socketManager.joinRoom(chatId);
+      }
+    };
+    
+    const onAuthenticated = () => {
+      console.log('SOCKET AUTHENTICATED');
+      // Clear timeouts here too as a safety measure
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+    };
+    
+    // Register event listeners
+    socketManager.events.on('reconnected', onReconnected);
+    socketManager.events.on('authenticated', onAuthenticated);
+    socketManager.events.on('connected', onReconnected);
+
+    connectToSocket();
+
+    // Setup periodic check for socket connection
+    const connectionCheckInterval = setInterval(() => {
+      if (!socketManager.isConnected() && chatId) {
+        console.log("Socket disconnected, attempting to reconnect...");
+        connectToSocket();
+      }
+    }, 10000); // Check every 10 seconds
+
+    // Cleanup socket connection on unmount
+    return () => {
+      clearInterval(connectionCheckInterval);
+      // Remove event listeners
+      socketManager.events.off('reconnected', onReconnected);
+      socketManager.events.off('authenticated', onAuthenticated);
+      socketManager.events.off('connected', onReconnected);
+      
+      socketManager.offMessage(); // Remove message listener
+      
+      // Only disconnect if not using socket elsewhere
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+    };
+  }, [route.params?.chatId, chatId]);
+
+  const sendMessage = async (text: string, imageUri?: string) => {
+    try {
+      console.log("Attempting to send message...");
+      
+      // Ensure we have a valid chat ID
+      if (!chatId) {
+        console.error("Cannot send message: No valid chat ID");
+        return;
+      }
+      
+      // Check if socket is connected, attempt to connect if not
+      if (!socketManager.isConnected()) {
+        console.log("Socket not connected, attempting to connect before sending...");
+        try {
+          await socketManager.connect();
+          socketManager.joinRoom(chatId);
+          setSocketConnected(true);
+        } catch (socketError) {
+          console.error("Failed to connect socket:", socketError);
+          Alert.alert(
+            "Connection Error",
+            "Cannot connect to chat server. Please check your connection and try again."
+          );
+          return;
+        }
+      }
+
+      const newMessage: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        text,
+        sender: "user",
+        timestamp: new Date(),
+      };
+
+      // Add user message to the UI immediately
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+      // Clear any existing timeouts
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+
+      // Store message in AsyncStorage if we have a valid chat ID
+      if (chatId) {
+        try {
+          // Add the message to chat history in AsyncStorage
+          const chatHistory = await AsyncStorage.getItem(`chat_${chatId}`);
+          const messages = chatHistory ? JSON.parse(chatHistory) : [];
+          messages.push(newMessage);
+          await AsyncStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
+        } catch (storageError) {
+          console.error("Failed to save message to storage:", storageError);
+        }
+      }
+
+      console.log(`Sending message to room ${chatId}`);
+      
+      // Add typing indicator
+      const typingIndicator: ChatMessage = {
+        id: `typing-${Date.now()}`,
+        text: "...",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, typingIndicator]);
+
+      // Send the message via socket
+      if (imageUri) {
+        console.log("Sending message with image:", { text, imageUri });
+        const base64Data = await getBase64FromUri(imageUri);
+        if (!base64Data) {
+          console.error("Failed to get image data for message");
+          return;
+        }
+        
+        socketManager.sendMessage(JSON.stringify({
+          text,
+          image: base64Data,
+          chatId,
+          type: 'image'
+        }));
+      } else {
+        console.log("Sending text message:", text);
+        socketManager.sendMessage(text);
+      }
+
+      // Set a timeout to detect if no response comes back
+      messageTimeoutRef.current = setTimeout(() => {
+        console.log("Message response timeout reached (30s)");
+        
+        // Remove typing indicators
+        setMessages((prevMessages) => 
+          prevMessages.filter((msg) => !msg.id.startsWith("typing"))
+        );
+        
+        // Add a system message indicating the timeout
+        const timeoutMessage: ChatMessage = {
+          id: `timeout-${Date.now()}`,
+          text: "The server is taking longer than expected to respond. Please wait or try again later.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        
+        setMessages((prevMessages) => [...prevMessages, timeoutMessage]);
+        
+        // Clear the timeout ref
+        messageTimeoutRef.current = null;
+        
+        // Try to reconnect the socket - use connect() instead of reconnect()
+        socketManager.connect().catch(error => {
+          console.error("Failed to reconnect socket after timeout:", error);
+        });
+      }, 30000); // 30 second timeout
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      Alert.alert(
+        "Error",
+        "Failed to send message. Please try again."
+      );
+    }
+  };
 
   return (
     <KeyboardAvoidingView
