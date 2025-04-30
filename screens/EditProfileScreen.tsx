@@ -27,8 +27,6 @@ import api from "@/services/api";
 import { updateProfile as updateUserProfile } from "@/services/authService";
 import CustomButton from "@/components/Button";
 
-const API_URL = "http://localhost:4000";
-
 type RootStackParamList = {
   UserScreen: undefined;
 };

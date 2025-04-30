@@ -23,6 +23,7 @@ import Logo from "@/components/ui/Logo";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthTokens, ApiError } from "@/types/auth";
+import { API_URL } from "@env";
 
 declare global {
   var authStateChanged: boolean;
@@ -30,8 +31,6 @@ declare global {
 }
 
 WebBrowser.maybeCompleteAuthSession();
-
-const API_URL = "http://localhost:4000";
 
 type RootStackParamList = {
   Login: undefined;

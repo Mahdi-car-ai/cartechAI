@@ -30,10 +30,9 @@ import {
   ApiError,
   SignupData,
 } from "@/types/auth";
+import { API_URL } from "@env";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const API_URL = "http://localhost:4000";
 
 type RootStackParamList = {
   Login: undefined;

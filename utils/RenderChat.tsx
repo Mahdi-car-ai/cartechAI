@@ -8,9 +8,13 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { RenderChatProps } from "@/types/chat";
+import { RenderChatProps, ChatMessage } from "@/types/chat";
 
-const processTextWithMedia = (text, item, handleImageLoad) => {
+const processTextWithMedia = (
+  text: string | undefined,
+  item: ChatMessage,
+  handleImageLoad: (id: string) => void
+) => {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   const imagePattern =
     /(https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|gif))(?=[\s)]|$)/i;
@@ -18,7 +22,7 @@ const processTextWithMedia = (text, item, handleImageLoad) => {
   const boldPattern = /\*\*(.*?)\*\*/g;
   const emojiPattern = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
 
-  return (text || "").split(urlPattern).map((part, index) => {
+  return (text || "").split(urlPattern).map((part: string, index: number) => {
     if (imagePattern.test(part)) {
       return (
         <TouchableOpacity key={index} onPress={() => Linking.openURL(part)}>
@@ -73,10 +77,12 @@ const processTextWithMedia = (text, item, handleImageLoad) => {
 const RenderChat = memo(
   ({ item, loadingStates, setLoadingStates }: RenderChatProps) => {
     const handleImageLoad = useCallback(
-      (id) => {
-        setLoadingStates((prev) => ({ ...prev, [id]: false }));
+      (id: string) => {
+        const updatedStates: Record<string, boolean> = { ...loadingStates };
+        updatedStates[id] = false;
+        setLoadingStates(updatedStates);
       },
-      [setLoadingStates],
+      [loadingStates, setLoadingStates],
     );
 
     const imageLoading = loadingStates[item.id] ?? true;
