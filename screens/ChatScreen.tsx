@@ -25,14 +25,15 @@ import Voice from "@react-native-voice/voice";
 import socketManager from "@/services/SocketManager";
 import { CarDetails } from "@/types/CarDetails";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
+import { getChatMessages, Message as ApiMessage } from "@/utils/Chat";
 
 // Function to convert image URI to base64
 const getBase64FromUri = async (uri: string): Promise<string | null> => {
   try {
     // Check if the URI is valid
-    if (!uri || !uri.startsWith('file://')) {
-      console.error('Invalid URI format for image conversion:', uri);
+    if (!uri || !uri.startsWith("file://")) {
+      console.error("Invalid URI format for image conversion:", uri);
       return null;
     }
 
@@ -43,7 +44,7 @@ const getBase64FromUri = async (uri: string): Promise<string | null> => {
 
     return base64 ? `data:image/jpeg;base64,${base64}` : null;
   } catch (error) {
-    console.error('Error converting image to base64:', error);
+    console.error("Error converting image to base64:", error);
     return null;
   }
 };
@@ -89,6 +90,21 @@ const ChatScreen = () => {
 
   // Create ref for message timeout
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Add new state for API pagination
+  const [messagePage, setMessagePage] = useState<number>(1);
+  const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState<boolean>(false);
+  const [totalMessages, setTotalMessages] = useState<number>(0);
+  const messagesPerPage = 10;
+
+  // Add scroll position tracking
+  const [isAtTop, setIsAtTop] = useState<boolean>(false);
+  const [scrollY, setScrollY] = useState<number>(0);
+
+  // Add a new state to control scrolling behavior during loading more messages
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] =
+    useState<boolean>(false);
 
   // Initialization for voice recognition
   useEffect(() => {
@@ -293,32 +309,95 @@ const ChatScreen = () => {
     }, 15000); // 15 second timeout
   };
 
+  // Fetch initial messages from API
+  useEffect(() => {
+    if (chatId) {
+      fetchMessages(chatId);
+    }
+  }, [chatId]);
+
+  // Function to fetch messages from API
+  const fetchMessages = async (chatId: string, page: number = 1) => {
+    try {
+      setIsLoadingMessages(true);
+      const response = await getChatMessages(chatId, page, messagesPerPage);
+
+      const apiMessages = response.messages;
+      setTotalMessages(response.total);
+
+      // Check if there are more messages to load
+      setHasMoreMessages(page * messagesPerPage < response.total);
+
+      // Convert API messages to ChatMessage format
+      const formattedMessages = apiMessages.map(
+        (msg: ApiMessage): ChatMessage => ({
+          id: msg.id,
+          text: msg.content,
+          sender:
+            msg.senderId === "00000000-0000-0000-0000-000000000000"
+              ? "bot"
+              : "user",
+          timestamp: new Date(msg.timestamp),
+        }),
+      );
+
+      if (page === 1) {
+        // First page, replace existing messages
+        setMessages(formattedMessages);
+      } else {
+        // For loading more messages (pagination), set the flag to prevent auto-scrolling
+        setIsLoadingMoreMessages(true);
+
+        // Subsequent pages, prepend to existing messages
+        setMessages((prevMessages) => [...formattedMessages, ...prevMessages]);
+      }
+
+      setMessagePage(page);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      Alert.alert("Error", "Failed to fetch messages. Please try again.");
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  // Load more messages when explicitly requested
+  const handleLoadMoreMessages = () => {
+    if (hasMoreMessages && !isLoadingMessages && chatId && isAtTop) {
+      // Set the flag to prevent auto-scrolling when more messages are loaded
+      setIsLoadingMoreMessages(true);
+      fetchMessages(chatId, messagePage + 1);
+    }
+  };
+
   useEffect(() => {
     const initChat = async () => {
       try {
         // First ensure the socket is connected
         if (!socketManager.isConnected()) {
-          console.log("Socket not connected during initChat, connecting first...");
+          console.log(
+            "Socket not connected during initChat, connecting first...",
+          );
           await socketManager.connect();
           // Add a small delay to ensure connection is established
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
         }
-        
+
         if (!chatId && !route.params?.chatId) {
           // Creating a new chat
           console.log("Creating new chat session...");
           // Generate a temporary ID for new chat
           const tempChatId = "chat-" + Date.now().toString();
-          
+
           // Clear messages when creating a new chat
           setMessages([]);
           setConversationHistory([]);
-          
+
           // Set the new chat ID
           setChatId(tempChatId);
-          
+
           console.log(`New chat created with ID: ${tempChatId}`);
-          
+
           // Double check that socket is connected before joining
           if (socketManager.isConnected()) {
             console.log(`Socket is connected, joining new room: ${tempChatId}`);
@@ -327,7 +406,9 @@ const ChatScreen = () => {
               socketManager.joinRoom(tempChatId);
             }, 500);
           } else {
-            console.error("Socket not connected after connect attempt, cannot join new chat room");
+            console.error(
+              "Socket not connected after connect attempt, cannot join new chat room",
+            );
             try {
               console.log("Trying one more connect attempt for new chat");
               await socketManager.connect();
@@ -341,28 +422,32 @@ const ChatScreen = () => {
         } else if (route.params?.chatId) {
           // Joining existing chat
           const existingChatId = route.params.chatId;
-          
+
           // Clear previous messages when changing chat
           if (chatId !== existingChatId) {
             console.log(`Changing chat from ${chatId} to ${existingChatId}`);
             setMessages([]);
             setConversationHistory([]);
           }
-          
+
           setChatId(existingChatId);
-          
+
           // Only try to join room if socket is connected
           if (socketManager.isConnected()) {
-            console.log(`Socket is connected, joining existing room: ${existingChatId}`);
+            console.log(
+              `Socket is connected, joining existing room: ${existingChatId}`,
+            );
             // Add delay before joining to ensure connection is ready
             setTimeout(() => {
               socketManager.joinRoom(existingChatId);
             }, 500);
           } else {
-            console.log("Socket not connected, will join room when socket connects");
+            console.log(
+              "Socket not connected, will join room when socket connects",
+            );
           }
         }
-        
+
         // Set socket connected state to match actual connection status
         setSocketConnected(socketManager.isConnected());
       } catch (error) {
@@ -376,7 +461,9 @@ const ChatScreen = () => {
   // Handle socket connection changes - this helps ensure we join the room when socket connects
   useEffect(() => {
     if (socketConnected && chatId) {
-      console.log(`Socket is now connected. Ensuring we are in room: ${chatId}`);
+      console.log(
+        `Socket is now connected. Ensuring we are in room: ${chatId}`,
+      );
       socketManager.joinRoom(chatId);
     }
   }, [socketConnected, chatId]);
@@ -571,7 +658,7 @@ const ChatScreen = () => {
   };
 
   const scrollToBottom = () => {
-    if (flatListRef.current) {
+    if (flatListRef.current && !isLoadingMoreMessages) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
       }, 50);
@@ -581,14 +668,15 @@ const ChatScreen = () => {
   // Connect to socket on component mount - do this early
   useEffect(() => {
     console.log("Initializing socket connection on component mount");
-    socketManager.connect()
+    socketManager
+      .connect()
       .then(() => {
         console.log("Socket pre-connected successfully");
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Failed to pre-connect socket:", error);
       });
-    
+
     return () => {
       // No need to disconnect here as we'll do it in the main cleanup
     };
@@ -608,14 +696,16 @@ const ChatScreen = () => {
 
     // Ensure we have an active socket connection before sending
     if (!socketManager.isConnected()) {
-      console.log("Socket not connected. Reconnecting before sending message...");
+      console.log(
+        "Socket not connected. Reconnecting before sending message...",
+      );
       try {
         await socketManager.connect();
         // Ensure we're in the right room
         if (chatId) {
           socketManager.joinRoom(chatId);
           // Give it a moment to connect
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
         }
       } catch (error) {
         console.error("Failed to reconnect socket before sending:", error);
@@ -675,7 +765,9 @@ const ChatScreen = () => {
           const typingExists = prevMessages.some((msg) => msg.id === typingId);
 
           if (typingExists) {
-            console.log("No response received within timeout period, showing error message");
+            console.log(
+              "No response received within timeout period, showing error message",
+            );
             // Replace typing indicator with error message
             return prevMessages.map((msg) =>
               msg.id === typingId
@@ -740,19 +832,25 @@ const ChatScreen = () => {
   // Watch socket connection status to reset timeouts when reconnected
   useEffect(() => {
     if (socketConnected) {
-      console.log("Socket connected/reconnected - clearing any pending timeouts");
+      console.log(
+        "Socket connected/reconnected - clearing any pending timeouts",
+      );
       // Clear any pending timeouts when socket reconnects
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
-      
+
       // Also remove typing indicators from UI when socket reconnects
       setMessages((prevMessages) => {
-        const updatedMessages = prevMessages.filter((msg) => !msg.id.startsWith("typing"));
+        const updatedMessages = prevMessages.filter(
+          (msg) => !msg.id.startsWith("typing"),
+        );
         const removedCount = prevMessages.length - updatedMessages.length;
         if (removedCount > 0) {
-          console.log(`Removed ${removedCount} stale typing indicators after reconnect`);
+          console.log(
+            `Removed ${removedCount} stale typing indicators after reconnect`,
+          );
         }
         return updatedMessages;
       });
@@ -768,7 +866,7 @@ const ChatScreen = () => {
           console.log("Connecting to socket in main useEffect");
           await socketManager.connect();
         }
-        
+
         setSocketConnected(true);
         console.log(`Chat ID from route: ${route.params?.chatId}`);
 
@@ -792,22 +890,28 @@ const ChatScreen = () => {
 
             // If the message is from the user or the bot, handle appropriately
             if (messageData.senderId) {
-              const isBot = messageData.senderId === "00000000-0000-0000-0000-000000000000";
-              
+              const isBot =
+                messageData.senderId === "00000000-0000-0000-0000-000000000000";
+
               // For bot messages, remove typing indicators
               if (isBot) {
-                console.log("Removing typing indicators - bot message received");
+                console.log(
+                  "Removing typing indicators - bot message received",
+                );
                 setMessages((prevMessages) => {
-                  const updatedMessages = prevMessages.filter((msg) => !msg.id.startsWith("typing"));
-                  
+                  const updatedMessages = prevMessages.filter(
+                    (msg) => !msg.id.startsWith("typing"),
+                  );
+
                   // Log if indicators were actually removed
-                  const removedCount = prevMessages.length - updatedMessages.length;
+                  const removedCount =
+                    prevMessages.length - updatedMessages.length;
                   if (removedCount > 0) {
                     console.log(`Removed ${removedCount} typing indicators`);
                   } else {
                     console.log("No typing indicators found to remove");
                   }
-                  
+
                   return updatedMessages;
                 });
               }
@@ -818,12 +922,14 @@ const ChatScreen = () => {
                 const messageExists = prevMessages.some(
                   (msg) =>
                     (msg.id && msg.id === messageData.id) ||
-                    (msg.text === messageData.content && 
-                     msg.sender === (isBot ? "bot" : "user"))
+                    (msg.text === messageData.content &&
+                      msg.sender === (isBot ? "bot" : "user")),
                 );
-                
+
                 if (!messageExists) {
-                  console.log(`Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`);
+                  console.log(
+                    `Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`,
+                  );
                   return [
                     ...prevMessages,
                     {
@@ -836,7 +942,9 @@ const ChatScreen = () => {
                     },
                   ];
                 } else {
-                  console.log(`Message already exists in UI: ${messageData.content}`);
+                  console.log(
+                    `Message already exists in UI: ${messageData.content}`,
+                  );
                 }
                 return prevMessages;
               });
@@ -854,36 +962,36 @@ const ChatScreen = () => {
 
     // Setup event listeners for socket state changes
     const onReconnected = () => {
-      console.log('SOCKET RECONNECTED - Clearing timeouts and indicators');
+      console.log("SOCKET RECONNECTED - Clearing timeouts and indicators");
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
-      
+
       // Remove typing indicators
-      setMessages((prevMessages) => 
-        prevMessages.filter((msg) => !msg.id.startsWith("typing"))
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => !msg.id.startsWith("typing")),
       );
-      
+
       // Ensure we are in the right room
       if (chatId) {
         socketManager.joinRoom(chatId);
       }
     };
-    
+
     const onAuthenticated = () => {
-      console.log('SOCKET AUTHENTICATED');
+      console.log("SOCKET AUTHENTICATED");
       // Clear timeouts here too as a safety measure
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
         messageTimeoutRef.current = null;
       }
     };
-    
+
     // Register event listeners
-    socketManager.events.on('reconnected', onReconnected);
-    socketManager.events.on('authenticated', onAuthenticated);
-    socketManager.events.on('connected', onReconnected);
+    socketManager.events.on("reconnected", onReconnected);
+    socketManager.events.on("authenticated", onAuthenticated);
+    socketManager.events.on("connected", onReconnected);
 
     connectToSocket();
 
@@ -899,12 +1007,12 @@ const ChatScreen = () => {
     return () => {
       clearInterval(connectionCheckInterval);
       // Remove event listeners
-      socketManager.events.off('reconnected', onReconnected);
-      socketManager.events.off('authenticated', onAuthenticated);
-      socketManager.events.off('connected', onReconnected);
-      
+      socketManager.events.off("reconnected", onReconnected);
+      socketManager.events.off("authenticated", onAuthenticated);
+      socketManager.events.off("connected", onReconnected);
+
       socketManager.offMessage(); // Remove message listener
-      
+
       // Only disconnect if not using socket elsewhere
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
@@ -913,19 +1021,22 @@ const ChatScreen = () => {
     };
   }, [route.params?.chatId, chatId]);
 
+  // Update sendMessage to use the API structure
   const sendMessage = async (text: string, imageUri?: string) => {
     try {
       console.log("Attempting to send message...");
-      
+
       // Ensure we have a valid chat ID
       if (!chatId) {
         console.error("Cannot send message: No valid chat ID");
         return;
       }
-      
+
       // Check if socket is connected, attempt to connect if not
       if (!socketManager.isConnected()) {
-        console.log("Socket not connected, attempting to connect before sending...");
+        console.log(
+          "Socket not connected, attempting to connect before sending...",
+        );
         try {
           await socketManager.connect();
           socketManager.joinRoom(chatId);
@@ -934,7 +1045,7 @@ const ChatScreen = () => {
           console.error("Failed to connect socket:", socketError);
           Alert.alert(
             "Connection Error",
-            "Cannot connect to chat server. Please check your connection and try again."
+            "Cannot connect to chat server. Please check your connection and try again.",
           );
           return;
         }
@@ -962,14 +1073,17 @@ const ChatScreen = () => {
           const chatHistory = await AsyncStorage.getItem(`chat_${chatId}`);
           const messages = chatHistory ? JSON.parse(chatHistory) : [];
           messages.push(newMessage);
-          await AsyncStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
+          await AsyncStorage.setItem(
+            `chat_${chatId}`,
+            JSON.stringify(messages),
+          );
         } catch (storageError) {
           console.error("Failed to save message to storage:", storageError);
         }
       }
 
       console.log(`Sending message to room ${chatId}`);
-      
+
       // Add typing indicator
       const typingIndicator: ChatMessage = {
         id: `typing-${Date.now()}`,
@@ -977,8 +1091,14 @@ const ChatScreen = () => {
         sender: "bot",
         timestamp: new Date(),
       };
-      
+
       setMessages((prevMessages) => [...prevMessages, typingIndicator]);
+
+      // Format the message according to the API structure
+      const apiMessage = {
+        content: text,
+        chatId: chatId,
+      };
 
       // Send the message via socket
       if (imageUri) {
@@ -988,13 +1108,15 @@ const ChatScreen = () => {
           console.error("Failed to get image data for message");
           return;
         }
-        
-        socketManager.sendMessage(JSON.stringify({
-          text,
-          image: base64Data,
-          chatId,
-          type: 'image'
-        }));
+
+        socketManager.sendMessage(
+          JSON.stringify({
+            text,
+            image: base64Data,
+            chatId,
+            type: "image",
+          }),
+        );
       } else {
         console.log("Sending text message:", text);
         socketManager.sendMessage(text);
@@ -1003,12 +1125,12 @@ const ChatScreen = () => {
       // Set a timeout to detect if no response comes back
       messageTimeoutRef.current = setTimeout(() => {
         console.log("Message response timeout reached (30s)");
-        
+
         // Remove typing indicators
-        setMessages((prevMessages) => 
-          prevMessages.filter((msg) => !msg.id.startsWith("typing"))
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => !msg.id.startsWith("typing")),
         );
-        
+
         // Add a system message indicating the timeout
         const timeoutMessage: ChatMessage = {
           id: `timeout-${Date.now()}`,
@@ -1016,26 +1138,32 @@ const ChatScreen = () => {
           sender: "bot",
           timestamp: new Date(),
         };
-        
+
         setMessages((prevMessages) => [...prevMessages, timeoutMessage]);
-        
+
         // Clear the timeout ref
         messageTimeoutRef.current = null;
-        
+
         // Try to reconnect the socket - use connect() instead of reconnect()
-        socketManager.connect().catch(error => {
+        socketManager.connect().catch((error) => {
           console.error("Failed to reconnect socket after timeout:", error);
         });
       }, 30000); // 30 second timeout
-      
     } catch (error) {
       console.error("Error sending message:", error);
-      Alert.alert(
-        "Error",
-        "Failed to send message. Please try again."
-      );
+      Alert.alert("Error", "Failed to send message. Please try again.");
     }
   };
+
+  // Use effect to maintain scroll position after loading more messages
+  useEffect(() => {
+    if (isLoadingMoreMessages && !isLoadingMessages) {
+      // Reset flag after a short delay to ensure messages are rendered
+      setTimeout(() => {
+        setIsLoadingMoreMessages(false);
+      }, 500);
+    }
+  }, [isLoadingMessages, isLoadingMoreMessages]);
 
   return (
     <KeyboardAvoidingView
@@ -1056,7 +1184,37 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Show load more button when at top and has more messages */}
+        {isAtTop && hasMoreMessages && (
+          <TouchableOpacity
+            style={[
+              styles.loadMoreButton,
+              isLoadingMessages && styles.loadMoreButtonLoading,
+            ]}
+            onPress={handleLoadMoreMessages}
+            disabled={isLoadingMessages}
+          >
+            {isLoadingMessages ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Icon name="chevron-up" type="feather" size={20} color="#fff" />
+                <Text style={styles.loadMoreText}>Load more messages</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {isLoadingMessages && messagePage > 1 && !isAtTop && (
+          <ActivityIndicator
+            size="small"
+            color="#95ff77"
+            style={styles.loadingIndicator}
+          />
+        )}
+
         <FlatList
+          showsVerticalScrollIndicator={false}
           ref={flatListRef}
           data={messages}
           renderItem={({ item }) => (
@@ -1068,11 +1226,25 @@ const ChatScreen = () => {
           )}
           keyExtractor={(item) => item.id}
           style={styles.chatBox}
-          onContentSizeChange={() => !isUserScrolling && scrollToBottom()}
-          onLayout={() => !isUserScrolling && scrollToBottom()}
+          onContentSizeChange={() =>
+            !isUserScrolling && !isLoadingMoreMessages && scrollToBottom()
+          }
+          onLayout={() =>
+            !isUserScrolling && !isLoadingMoreMessages && scrollToBottom()
+          }
           onScrollBeginDrag={() => setIsUserScrolling(true)}
-          onMomentumScrollEnd={() => setIsUserScrolling(false)} // Re-enable auto-scroll when user stops
+          onScroll={(event) => {
+            const currentY = event.nativeEvent.contentOffset.y;
+            setScrollY(currentY);
+            setIsAtTop(currentY < 20);
+          }}
+          onMomentumScrollEnd={() => {
+            setIsUserScrolling(false); // Re-enable auto-scroll when user stops
+          }}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
+          onEndReachedThreshold={0.1}
+          inverted={false}
         />
 
         {selectedImage && (
@@ -1400,6 +1572,28 @@ const styles = StyleSheet.create({
     height: 24,
     alignItems: "center",
     justifyContent: "center",
+  },
+  loadMoreButton: {
+    flexDirection: "row",
+    backgroundColor: "#2a2e2e",
+    padding: 10,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 10,
+    alignSelf: "center",
+  },
+  loadMoreButtonLoading: {
+    backgroundColor: "#444",
+    opacity: 0.7,
+  },
+  loadMoreText: {
+    color: "#fff",
+    marginLeft: 5,
+    fontFamily: "Aeonik",
+  },
+  loadingIndicator: {
+    marginVertical: 10,
   },
 });
 

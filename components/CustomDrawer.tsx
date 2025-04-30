@@ -15,15 +15,13 @@ import { Icon } from "react-native-elements";
 import { getAuth, signOut } from "firebase/auth";
 import { app } from "../config/firebaseConfig";
 import Logo from "./ui/Logo";
-import { getChats } from "../utils/Chat";
+import { getChats } from "@/utils/Chat";
 
-interface Chat {
+// Define the Chat interface locally to avoid import issues
+interface ChatItem {
   id: string;
-  created_at?: {
-    toDate: () => Date;
-  };
-  carDetails?: string;
-  [key: string]: any;
+  type: string;
+  createdAt: string;
 }
 
 type RootStackParamList = {
@@ -37,17 +35,17 @@ type RootStackParamList = {
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface CategorizedChats {
-  Today: Chat[];
-  Yesterday: Chat[];
-  "3 days ago": Chat[];
-  "4 days ago": Chat[];
-  "5 days ago": Chat[];
-  "6 days ago": Chat[];
-  "Last Week": Chat[];
-  [key: string]: Chat[];
+  Today: ChatItem[];
+  Yesterday: ChatItem[];
+  "3 days ago": ChatItem[];
+  "4 days ago": ChatItem[];
+  "5 days ago": ChatItem[];
+  "6 days ago": ChatItem[];
+  "Last Week": ChatItem[];
+  [key: string]: ChatItem[];
 }
 
-const categorizeChats = (chats: Chat[]): CategorizedChats => {
+const categorizeChats = (chats: ChatItem[]): CategorizedChats => {
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset to start of the day
 
@@ -63,10 +61,10 @@ const categorizeChats = (chats: Chat[]): CategorizedChats => {
 
   if (!chats) return categorizedChats;
 
-  chats.forEach((chat: Chat) => {
-    if (!chat.created_at) return;
+  chats.forEach((chat: ChatItem) => {
+    if (!chat.createdAt) return;
 
-    const chatDate = chat.created_at.toDate();
+    const chatDate = new Date(chat.createdAt);
     chatDate.setHours(0, 0, 0, 0);
 
     const diffInDays = Math.floor(
@@ -105,7 +103,7 @@ const CustomDrawer = (props: DrawerProps) => {
   const navigation = useNavigation<NavigationProp>();
   const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [chats, setChats] = useState<ChatItem[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -135,8 +133,8 @@ const CustomDrawer = (props: DrawerProps) => {
     loadUserProfile();
 
     const fetchChats = async () => {
-      // const fetchedChats = await getChats();
-      // setChats(fetchedChats as Chat[]);
+      const fetchedChats = await getChats();
+      setChats(fetchedChats as ChatItem[]);
     };
 
     fetchChats();
@@ -172,7 +170,7 @@ const CustomDrawer = (props: DrawerProps) => {
     </View>
   );
 
-  const renderSection = (title: string, data: Chat[]) => {
+  const renderSection = (title: string, data: ChatItem[]) => {
     if (data.length === 0) return null;
     return (
       <View key={title}>
@@ -184,7 +182,7 @@ const CustomDrawer = (props: DrawerProps) => {
           }}
         />
         <Text style={styles.sectionTitle}>{title}</Text>
-        {data.map((item: Chat) => {
+        {data.map((item: ChatItem) => {
           const isActive =
             activeChatId === item.id && currentRoute === "ChatScreen";
           return (
@@ -198,11 +196,12 @@ const CustomDrawer = (props: DrawerProps) => {
                 setActiveChatId(item.id);
                 navigation.navigate("ChatScreen", {
                   chatId: item.id,
-                  carDetails: item.carDetails,
                 });
               }}
             >
-              <Text style={styles.chatText}>{item.carDetails}</Text>
+              <Text
+                style={styles.chatText}
+              >{`Chat ${item.id.substring(0, 8)}...`}</Text>
             </TouchableOpacity>
           );
         })}
@@ -225,8 +224,8 @@ const CustomDrawer = (props: DrawerProps) => {
         style={styles.profileContainer}
         onPress={() => navigation.navigate("UserScreen")}
       >
-        {user?.photoURLo ? (
-          <Image source={{ uri: user.userLogo }} style={styles.profileImage} />
+        {user?.photoURL ? (
+          <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
         ) : (
           <Image
             source={require("../assets/images/icons/user.png")}
