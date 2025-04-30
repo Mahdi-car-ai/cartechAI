@@ -12,8 +12,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Icon } from "react-native-elements";
-import { getAuth, signOut } from "firebase/auth";
-import { app } from "../config/firebaseConfig";
 import Logo from "./ui/Logo";
 import { getChats } from "@/utils/Chat";
 
@@ -101,7 +99,6 @@ interface DrawerProps {
 
 const CustomDrawer = (props: DrawerProps) => {
   const navigation = useNavigation<NavigationProp>();
-  const auth = getAuth(app);
   const [user, setUser] = useState<any>(null);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -112,18 +109,6 @@ const CustomDrawer = (props: DrawerProps) => {
         const userProfileData = await AsyncStorage.getItem("userProfile");
         if (userProfileData) {
           setUser(JSON.parse(userProfileData));
-        } else {
-          const currentUser = auth.currentUser;
-          if (currentUser) {
-            await AsyncStorage.setItem(
-              "userProfile",
-              JSON.stringify({
-                email: currentUser.email,
-                photoURL: currentUser.photoURL,
-              }),
-            );
-            setUser(currentUser);
-          }
         }
       } catch (error) {
         console.error("Error loading user profile:", error);
