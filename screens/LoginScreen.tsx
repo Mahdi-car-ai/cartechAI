@@ -40,8 +40,8 @@ type RootStackParamList = {
 
 export default function LoginScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState("jkdumpkj@gmail.com");
-  const [password, setPassword] = useState("Developer2024");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const width = useWindowDimensions().width * 0.9;
 
@@ -70,9 +70,9 @@ export default function LoginScreen() {
 
     setLoading(true);
 
-    console.log(`${API_URL}/auth/signup`);
+    console.log(`${process.env.API_URL}/auth/signup`);
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, {
+      const response = await axios.post(`${process.env.API_URL}/auth/signup`, {
         email: email.trim(),
         password,
       });
@@ -108,7 +108,7 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/signin`, {
+      const response = await axios.post(`${process.env.API_URL}/auth/signin`, {
         email: email.trim(),
         password,
       });
@@ -140,7 +140,7 @@ export default function LoginScreen() {
 
   const fetchUserData = async (accessToken: string) => {
     try {
-      const response = await axios.get(`${API_URL}/auth/me`, {
+      const response = await axios.get(`${process.env.API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

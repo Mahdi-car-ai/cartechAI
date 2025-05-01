@@ -8,7 +8,7 @@ type CustomRequestConfig = any & {
 
 // Create a custom axios instance
 const api = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: process.env.API_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -50,7 +50,7 @@ const refreshToken = async (): Promise<string | null> => {
     }
 
     const response = await axios.post(
-      "http://localhost:4000/auth/refresh",
+      `${process.env.API_URL}/auth/refresh`,
       {},
       {
         headers: {
