@@ -175,10 +175,7 @@ export default function SignupScreen() {
         // userLogo: step1Form.userLogo,
       };
 
-      const response = await axios.post(
-        `${process.env.API_URL}/auth/signup`,
-        signupData,
-      );
+      const response = await axios.post(`${API_URL}/auth/signup`, signupData);
 
       // Store the userId for the second step
       const userData = response.data as {
@@ -257,15 +254,11 @@ export default function SignupScreen() {
         throw new Error("Authentication token is missing");
       }
 
-      await axios.patch(
-        `${process.env.API_URL}/auth/add-user-fields`,
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      await axios.patch(`${API_URL}/auth/add-user-fields`, userData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       // Store user profile data
       const userProfileData = {

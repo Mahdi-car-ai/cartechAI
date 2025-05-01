@@ -2,6 +2,7 @@ import { io, Socket } from "socket.io-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "./api";
 import { EventEmitter } from "events";
+import { API_URL } from "@env";
 
 interface UserData {
   userId: string;
@@ -88,7 +89,7 @@ class SocketManager {
       }
 
       // Create new connection with fresh token
-      this.socket = io(`${process.env.API_URL}/chats`, {
+      this.socket = io(`${API_URL}/chats`, {
         path: "/socket.io",
         transports: ["websocket"],
         auth: {
@@ -179,7 +180,7 @@ class SocketManager {
       }
 
       // Create socket connection
-      this.socket = io(`${process.env.API_URL}/chats`, {
+      this.socket = io(`${API_URL}/chats`, {
         path: "/socket.io",
         transports: ["websocket"],
         auth: {

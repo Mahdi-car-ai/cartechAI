@@ -1,5 +1,6 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URL } from "@env";
 
 // Define custom type that extends axios's internal config type
 type CustomRequestConfig = any & {
@@ -8,7 +9,7 @@ type CustomRequestConfig = any & {
 
 // Create a custom axios instance
 const api = axios.create({
-  baseURL: process.env.API_URL,
+  baseURL: API_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -50,7 +51,7 @@ const refreshToken = async (): Promise<string | null> => {
     }
 
     const response = await axios.post(
-      `${process.env.API_URL}/auth/refresh`,
+      `${API_URL}/auth/refresh`,
       {},
       {
         headers: {
