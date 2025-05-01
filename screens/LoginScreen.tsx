@@ -31,7 +31,7 @@ declare global {
 
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = "http://localhost:4000";
+const API_URL = "http://31.172.73.162:4000";
 
 type RootStackParamList = {
   Login: undefined;
@@ -125,8 +125,9 @@ export default function LoginScreen() {
 
       reloadApp();
     } catch (error: unknown) {
+      console.error(error);
       console.log(error);
-      let errorMessage = "Login failed. Please try again.";
+      let errorMessage = "Login failed. Please try again." + error;
 
       const apiError = error as ApiError;
       if (apiError.response?.data?.message) {

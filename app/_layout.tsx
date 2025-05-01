@@ -6,7 +6,6 @@ import {
   StatusBar,
   Dimensions,
 } from "react-native";
-import { NavigationContainer, useFocusEffect } from "@react-navigation/native";
 import {
   createDrawerNavigator,
   DrawerToggleButton,
@@ -69,7 +68,7 @@ const ScreenWithDrawer = ({
 
 const Layout = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isRegistrationComplete, setIsRegistrationComplete] = useState(true);
+  const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [statusBarHeight, setStatusBarHeight] = useState(0);
   const [authVersion, setAuthVersion] = useState(0); // Force re-render on auth change
@@ -114,7 +113,8 @@ const Layout = () => {
           global.registrationCompleted = false;
         }
       } else {
-        setIsRegistrationComplete(true); // Reset when not authenticated
+        // Reset state when not authenticated
+        setIsRegistrationComplete(false);
         global.registrationCompleted = false;
       }
 
@@ -123,7 +123,7 @@ const Layout = () => {
     } catch (error) {
       console.log("Error checking auth status:", error);
       setIsAuthenticated(false);
-      setIsRegistrationComplete(true);
+      setIsRegistrationComplete(false);
     } finally {
       setLoading(false);
     }
