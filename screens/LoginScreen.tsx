@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import LottieView from "lottie-react-native";
 import CustomButton from "@/components/Button";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome } from "@expo/vector-icons";
@@ -124,8 +123,9 @@ export default function LoginScreen() {
 
       reloadApp();
     } catch (error: unknown) {
+      console.error(error);
       console.log(error);
-      let errorMessage = "Login failed. Please try again.";
+      let errorMessage = "Login failed. Please try again." + error;
 
       const apiError = error as ApiError;
       if (apiError.response?.data?.message) {

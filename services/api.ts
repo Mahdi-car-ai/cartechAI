@@ -41,11 +41,8 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 const refreshToken = async (): Promise<string | null> => {
   console.log("refreshToken");
   try {
-    // const refreshToken = await AsyncStorage.getItem("refreshToken");
+    const refreshToken = await AsyncStorage.getItem("refreshToken");
     // Use the refresh token from storage instead of hardcoded value
-    const refreshToken =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNmNmNzExMi1iOTcyLTQzNDctOWIyMi0xMDIyNWFiZGRkM2IiLCJpYXQiOjE3NDU4NDg3NjEsImV4cCI6MTc0NjQ1MzU2MX0.uVKdIOKLkOCrGqbwDBYOu0ABvZ9NWKOsYL18wGPCKVU";
-
     if (!refreshToken) {
       throw new Error("No refresh token available");
     }
@@ -85,10 +82,8 @@ const refreshToken = async (): Promise<string | null> => {
 // Request interceptor to add auth token to every request
 api.interceptors.request.use(
   async (config: any) => {
-    // const token = await AsyncStorage.getItem("accessToken");
+    const token = await AsyncStorage.getItem("accessToken");
     // Use the token from storage instead of hardcoded value
-    const token =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiNmNmNzExMi1iOTcyLTQzNDctOWIyMi0xMDIyNWFiZGRkM2IiLCJlbWFpbCI6ImprZHVtcGtqQGdtYWlsLmNvbSIsImlhdCI6MTc0NTg0ODc2MSwiZXhwIjoxNzQ1ODQ5NjYxfQ._UDQKkh9oDQ9bC5jTovkV5ueRQkRYKjVRej8Ldr76Ng";
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;

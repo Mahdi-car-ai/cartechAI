@@ -190,11 +190,16 @@ export default function SignupScreen() {
       await AsyncStorage.setItem("refreshToken", userData.refreshToken);
       await AsyncStorage.setItem("userEmail", step1Form.email);
 
+      // The user is now authenticated but registration is not complete
+      global.authStateChanged = true;
+      global.registrationCompleted = false;
+
       // Proceed to step 2
       setCurrentStep(2);
     } catch (error: unknown) {
+      console.error(error);
       console.log(error);
-      let errorMessage = "Signup failed. Please try again.";
+      let errorMessage = "Signup failed. Please try again." + error;
 
       // Type assertion for axios error
       const apiError = error as ApiError;
@@ -226,12 +231,6 @@ export default function SignupScreen() {
     if (!validateStep2()) {
       return;
     }
-
-    // if (!userId) {
-    //   Alert.alert("Error", "User ID is missing. Please try again.");
-    //   setCurrentStep(1);
-    //   return;
-    // }
 
     setLoading(true);
     try {
@@ -281,14 +280,16 @@ export default function SignupScreen() {
         JSON.stringify(userProfileData),
       );
 
-      // Signal authentication state change
+      // Only now mark registration as complete
       global.authStateChanged = true;
       global.registrationCompleted = true;
 
       Alert.alert("Success", "Your account has been created successfully!");
     } catch (error: unknown) {
       console.log(error);
-      let errorMessage = "Failed to save user information. Please try again.";
+      console.error(error);
+      let errorMessage =
+        "Failed to save user information. Please try again." + error;
 
       // Type assertion for axios error
       const apiError = error as ApiError;

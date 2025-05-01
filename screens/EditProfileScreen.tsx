@@ -19,7 +19,6 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import Logo from "@/components/ui/Logo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserProfile, ApiError } from "@/types/auth";
 import { Colors } from "@/constants/Colors";
