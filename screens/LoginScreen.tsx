@@ -22,7 +22,7 @@ import Logo from "@/components/ui/Logo";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthTokens, ApiError } from "@/types/auth";
-import { API_URL } from "@env";
+import { API_URL } from "@/constants/Environment";
 
 declare global {
   var authStateChanged: boolean;
@@ -132,7 +132,7 @@ export default function LoginScreen() {
         errorMessage = apiError.response.data.message;
       }
 
-      Alert.alert("Login Error", errorMessage);
+      Alert.alert("Login Error");
     } finally {
       setLoading(false);
     }

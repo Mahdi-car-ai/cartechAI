@@ -30,7 +30,7 @@ import {
   ApiError,
   SignupData,
 } from "@/types/auth";
-import { API_URL } from "@env";
+import { API_URL } from "@/constants/Environment";
 
 WebBrowser.maybeCompleteAuthSession();
 

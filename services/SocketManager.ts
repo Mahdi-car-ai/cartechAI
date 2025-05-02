@@ -2,7 +2,7 @@ import { io, Socket } from "socket.io-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "./api";
 import { EventEmitter } from "events";
-import { API_URL } from "@env";
+import { API_URL } from "@/constants/Environment";
 
 interface UserData {
   userId: string;
