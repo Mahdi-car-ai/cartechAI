@@ -69,7 +69,6 @@ export default function LoginScreen() {
 
     setLoading(true);
 
-    console.log(`${API_URL}/auth/signup`);
     try {
       const response = await axios.post(`${API_URL}/auth/signup`, {
         email: email.trim(),
@@ -132,6 +131,7 @@ export default function LoginScreen() {
         errorMessage = apiError.response.data.message;
       }
 
+      console.log(API_URL, "API_URL");
       Alert.alert("Login Error");
     } finally {
       setLoading(false);
