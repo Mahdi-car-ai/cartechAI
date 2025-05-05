@@ -26,6 +26,7 @@ import UserScreen from "@/screens/UserScreen";
 import CreatePostScreen from "@/screens/CreatePostScreen";
 import PostDetailsScreen from "@/screens/PostDetailsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ReduxProvider from "@/components/ReduxProvider";
 
 // Declare the global variable type
 declare global {
@@ -158,7 +159,7 @@ const Layout = () => {
   }
 
   return (
-    <>
+    <ReduxProvider>
       {isAuthenticated && isRegistrationComplete ? (
         <Drawer.Navigator
           drawerContent={(props) => <CustomDrawer {...props} />}
@@ -179,7 +180,11 @@ const Layout = () => {
             options={{ drawerItemStyle: { display: "none" } }}
           >
             {(props) => (
-              <ScreenWithDrawer {...props} component={CarDetailsScreen} />
+              <ScreenWithDrawer
+                {...props}
+                component={CarDetailsScreen}
+                hideDrawerButton
+              />
             )}
           </Drawer.Screen>
           <Drawer.Screen
@@ -245,7 +250,7 @@ const Layout = () => {
           <Drawer.Screen name="Signup" component={SignupScreen} />
         </Drawer.Navigator>
       )}
-    </>
+    </ReduxProvider>
   );
 };
 

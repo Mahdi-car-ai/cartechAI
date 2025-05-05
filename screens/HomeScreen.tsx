@@ -15,26 +15,13 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import LottieView from "lottie-react-native"; // Import Lottie
 import CustomButton from "@/components/Button";
 import Logo from "@/components/ui/Logo";
-
-type RootStackParamList = {
-  CarDetails: { vin: string };
-  EnterCarDetails: undefined;
-  [key: string]: undefined | object;
-};
+import VinSubmission from "@/components/vinSubmission/VinSubmission";
+import { RootStackParamList } from "@/types/NavigationTypes";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
-  const [vin, setVin] = useState("");
   const navigation = useNavigation<NavigationProp>();
-
-  const handleVinSubmission = () => {
-    if (!vin.trim()) {
-      Alert.alert("Invalid Input", "Please enter a valid VIN.");
-      return;
-    }
-    navigation.navigate("CarDetails", { vin });
-  };
 
   const handleEnterCarDetails = () => {
     navigation.navigate("EnterCarDetails");
@@ -68,19 +55,7 @@ export default function HomeScreen() {
             onPress={handleEnterCarDetails}
           />
           <Text style={styles.subtitle}>OR</Text>
-          <TextInput
-            style={[styles.input, { width: useWindowDimensions().width * 0.9 }]}
-            placeholder="Enter VIN (e.g., 1HGCM82633A123456)"
-            placeholderTextColor={"#ddd"}
-            value={vin}
-            maxLength={17}
-            onChangeText={setVin}
-          />
-          <CustomButton
-            title="Look Up"
-            icon="search"
-            onPress={handleVinSubmission}
-          />
+          <VinSubmission />
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
@@ -90,7 +65,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    fontFamily: 'Aeonik',
+    fontFamily: "Aeonik",
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -108,32 +83,22 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontFamily: 'Aeonik',
+    fontFamily: "Aeonik",
     marginBottom: 8,
     textAlign: "center",
     color: "#fff",
   },
   prompt: {
-    fontFamily: 'Aeonik',
+    fontFamily: "Aeonik",
     fontSize: 32,
     color: "#fff",
     marginBottom: 16,
     textAlign: "center",
   },
   subtitle: {
-    fontFamily: 'Aeonik',
+    fontFamily: "Aeonik",
     fontSize: 12,
     color: "#555D58",
-    textAlign: "center",
-  },
-  input: {
-    fontFamily: 'Aeonik',
-    padding: 16,
-    fontSize: 16,
-    borderRadius: 16,
-    marginTop: 16,
-    marginBottom: 8,
-    backgroundColor: "#fff",
     textAlign: "center",
   },
 });

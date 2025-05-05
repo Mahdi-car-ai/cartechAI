@@ -8,12 +8,16 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
+  useColorScheme,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import CustomButton from "@/components/Button";
 import { CarDetails } from "@/types/CarDetails";
 import Logo from "@/components/ui/Logo";
+import { FontAwesome } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
 
 type RootStackParamList = {
   CarDetailsScreen: { vin: string };
@@ -33,6 +37,8 @@ export default function CarDetailsScreen() {
   const [carDetails, setCarDetails] = useState<CarDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const colorScheme = useColorScheme();
+  const iconColor = Colors[colorScheme ?? "light"].icon;
 
   const handleVinSubmission = async () => {
     if (!vin.trim()) {
@@ -140,7 +146,21 @@ export default function CarDetailsScreen() {
           showsHorizontalScrollIndicator={false}
           horizontal={false}
         >
-          <Logo />
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={[
+                styles.backButton,
+                { flexDirection: "row", alignItems: "center" },
+              ]}
+            >
+              <FontAwesome name="chevron-left" size={18} color={iconColor} />
+              <Text style={{ marginLeft: 10, color: iconColor, fontSize: 16 }}>
+                Back
+              </Text>
+            </TouchableOpacity>
+            <Logo />
+          </View>
           <Text style={[styles.subtitle, { marginBottom: 0 }]}>
             Details for VIN:
           </Text>
@@ -227,13 +247,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#0f0f0f",
-    paddingTop: 20,
+    paddingTop: 30,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingBottom: 20,
+    paddingVertical: 30,
   },
   animation: {
     width: 200,
@@ -288,5 +306,16 @@ const styles = StyleSheet.create({
   },
   chatButton: {
     marginBottom: 40,
+  },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backButton: {
+    position: "absolute",
+    left: 0,
+    zIndex: 10,
   },
 });
