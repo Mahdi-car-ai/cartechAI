@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     borderRadius: 16,
     backgroundColor: "#fff",
+    alignItems: "center",
     textAlign: "center",
   },
   stateInput: {
@@ -40,15 +41,34 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 5,
   },
+  historyButton: {
+    position: "absolute",
+    right: "3%",
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    padding: 5,
+  },
+  stateButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  stateHistoryButton: {
+    padding: 5,
+    marginRight: 8,
+  },
   modalContainer: {
     flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
     maxHeight: "80%",
   },
   modalHeader: {
@@ -78,5 +98,22 @@ export const styles = StyleSheet.create({
   },
   selectedStateItemText: {
     fontWeight: "500",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    margin: 16,
+    paddingHorizontal: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    padding: 10,
+    fontFamily: "Aeonik",
+    fontSize: 16,
   },
 });

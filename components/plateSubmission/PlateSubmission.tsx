@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import {
   Alert,
   TextInput,
@@ -8,8 +8,10 @@ import {
   Text,
   Modal,
   FlatList,
-  SafeAreaView,
+  TouchableWithoutFeedback,
 } from "react-native";
+import { useDispatch } from "react-redux";
+import { addLicensePlateToHistory } from "@/store/slices/licensePlateHistorySlice";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -19,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { styles } from "@/components/plateSubmission/PlateSubmissionStyles";
 import { LicensePlateResponse } from "@/components/plateSubmission/model/types/LicensePlateResponse";
 import { US_STATES } from "@/components/plateSubmission/model/constants/US_STATES";
+import LicensePlateHistoryModal from "@/components/plateSubmission/licensePlateHistoryModal/LicensePlateHistoryModal";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -26,9 +29,25 @@ const PlateSubmission: FC = () => {
   const [licensePlate, setLicensePlate] = useState("");
   const [stateCode, setStateCode] = useState("NY");
   const [showStatePicker, setShowStatePicker] = useState(false);
+  const [licensePlateHistoryVisible, setLicensePlateHistoryVisible] =
+    useState(false);
+  const [stateSearch, setStateSearch] = useState("");
+  const [filteredStates, setFilteredStates] = useState(US_STATES);
 
   const navigation = useNavigation<NavigationProp>();
   const windowDimensions = useWindowDimensions();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (stateSearch) {
+      const filtered = US_STATES.filter((state) =>
+        state.toLowerCase().includes(stateSearch.toLowerCase()),
+      );
+      setFilteredStates(filtered);
+    } else {
+      setFilteredStates(US_STATES);
+    }
+  }, [stateSearch]);
 
   const clearLicensePlate = () => {
     setLicensePlate("");
@@ -36,11 +55,18 @@ const PlateSubmission: FC = () => {
 
   const toggleStatePicker = () => {
     setShowStatePicker(!showStatePicker);
+    setStateSearch("");
+    setFilteredStates(US_STATES);
   };
 
   const selectState = (itemValue: string) => {
     setStateCode(itemValue);
     setShowStatePicker(false);
+  };
+
+  const handleHistorySelect = (plate: string, state: string) => {
+    setLicensePlate(plate);
+    setStateCode(state);
   };
 
   const handlePlateSubmission = async () => {
@@ -56,6 +82,13 @@ const PlateSubmission: FC = () => {
       Alert.alert("Invalid Input", "Please select a state code.");
       return;
     }
+
+    dispatch(
+      addLicensePlateToHistory({
+        plate: licensePlate.trim(),
+        state: stateCode,
+      }),
+    );
 
     try {
       const apiKey = process.env.EXPO_PUBLIC_LICENSE_PLATE_API_KEY;
@@ -101,7 +134,14 @@ const PlateSubmission: FC = () => {
           >
             <Ionicons name="close-circle" size={26} color="#999" />
           </TouchableOpacity>
-        ) : null}
+        ) : (
+          <TouchableOpacity
+            style={styles.historyButton}
+            onPress={() => setLicensePlateHistoryVisible(true)}
+          >
+            <Ionicons name="time-outline" size={26} color="#999" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <TouchableOpacity
@@ -122,44 +162,73 @@ const PlateSubmission: FC = () => {
         animationType="slide"
         onRequestClose={toggleStatePicker}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select State</Text>
-              <TouchableOpacity onPress={toggleStatePicker}>
-                <Ionicons name="close" size={24} color="#000" />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={US_STATES}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.stateItem,
-                    stateCode === item && styles.selectedStateItem,
-                  ]}
-                  onPress={() => selectState(item)}
-                >
-                  <Text
-                    style={[
-                      styles.stateItemText,
-                      stateCode === item && styles.selectedStateItemText,
-                    ]}
-                  >
-                    {item}
-                  </Text>
+        <TouchableWithoutFeedback onPress={toggleStatePicker}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Select State</Text>
+                <TouchableOpacity onPress={toggleStatePicker}>
+                  <Ionicons name="close" size={24} color="#000" />
                 </TouchableOpacity>
-              )}
-            />
+              </View>
+              <View style={styles.searchContainer}>
+                <Ionicons
+                  name="search"
+                  size={20}
+                  color="#999"
+                  style={styles.searchIcon}
+                />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search states..."
+                  value={stateSearch}
+                  onChangeText={setStateSearch}
+                  autoCapitalize="none"
+                  placeholderTextColor="#999"
+                />
+                {stateSearch ? (
+                  <TouchableOpacity onPress={() => setStateSearch("")}>
+                    <Ionicons name="close-circle" size={20} color="#999" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <FlatList
+                data={filteredStates}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.stateItem,
+                      stateCode === item && styles.selectedStateItem,
+                    ]}
+                    onPress={() => selectState(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.stateItemText,
+                        stateCode === item && styles.selectedStateItemText,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
           </View>
-        </SafeAreaView>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <CustomButton
         title="Look Up"
         icon="search"
         onPress={handlePlateSubmission}
+      />
+
+      <LicensePlateHistoryModal
+        visible={licensePlateHistoryVisible}
+        onClose={() => setLicensePlateHistoryVisible(false)}
+        onSelectEntry={handleHistorySelect}
       />
     </>
   );

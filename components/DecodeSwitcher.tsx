@@ -15,6 +15,10 @@ const DecodeSwitcher: FC = () => {
           style={[
             styles.tabButton,
             activeType === "vin" && styles.activeTabButton,
+            activeType === "vin" && {
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+            },
           ]}
           onPress={() => setActiveType("vin")}
         >
@@ -31,6 +35,10 @@ const DecodeSwitcher: FC = () => {
           style={[
             styles.tabButton,
             activeType === "plate" && styles.activeTabButton,
+            activeType === "plate" && {
+              borderTopRightRadius: 12,
+              borderBottomRightRadius: 12,
+            },
           ]}
           onPress={() => setActiveType("plate")}
         >
@@ -57,6 +65,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabContainer: {
+    padding: 8,
     flexDirection: "row",
     width: "90%",
     marginBottom: 16,
@@ -66,7 +75,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
   },
