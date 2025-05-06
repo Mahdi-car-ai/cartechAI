@@ -15,7 +15,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import LottieView from "lottie-react-native"; // Import Lottie
 import CustomButton from "@/components/Button";
 import Logo from "@/components/ui/Logo";
-import VinSubmission from "@/components/vinSubmission/VinSubmission";
+import DecodeSwitcher from "@/components/DecodeSwitcher";
 import { RootStackParamList } from "@/types/NavigationTypes";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -55,7 +55,7 @@ export default function HomeScreen() {
             onPress={handleEnterCarDetails}
           />
           <Text style={styles.subtitle}>OR</Text>
-          <VinSubmission />
+          <DecodeSwitcher />
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
