@@ -14,6 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/types/NavigationTypes";
 import VinHistoryModal from "./VinHistoryModal";
+import VinScannerButton from "./VinScannerButton";
 import { Ionicons } from "@expo/vector-icons";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -38,11 +39,15 @@ const VinSubmission: FC = () => {
     setVin(selectedVin);
   };
 
+  const handleVinDetected = (detectedVin: string) => {
+    setVin(detectedVin);
+  };
+
   return (
     <>
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, { width: useWindowDimensions().width * 0.9 }]}
+          style={[styles.input, { width: useWindowDimensions().width * 0.9, paddingLeft: 40 }]}
           placeholder="Enter VIN (e.g., 1HGCM82633A123456)"
           placeholderTextColor={"#ddd"}
           value={vin}
@@ -50,6 +55,7 @@ const VinSubmission: FC = () => {
           onChangeText={setVin}
           // onFocus={() => setHistoryModalVisible(true)}
         />
+        <VinScannerButton onVinDetected={handleVinDetected} />
         {vin ? (
           <TouchableOpacity
             style={styles.clearButton}
