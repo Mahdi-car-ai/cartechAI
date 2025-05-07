@@ -47,7 +47,7 @@ const VinSubmission: FC = () => {
     <>
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, { width: useWindowDimensions().width * 0.9, paddingLeft: 40 }]}
+          style={[styles.input, { width: useWindowDimensions().width * 0.9 }]}
           placeholder="Enter VIN (e.g., 1HGCM82633A123456)"
           placeholderTextColor={"#ddd"}
           value={vin}

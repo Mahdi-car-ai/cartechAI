@@ -22,6 +22,7 @@ import { styles } from "@/components/plateSubmission/PlateSubmissionStyles";
 import { LicensePlateResponse } from "@/components/plateSubmission/model/types/LicensePlateResponse";
 import { US_STATES } from "@/components/plateSubmission/model/constants/US_STATES";
 import LicensePlateHistoryModal from "@/components/plateSubmission/licensePlateHistoryModal/LicensePlateHistoryModal";
+import PlateOCRButton from "@/components/plateSubmission/PlateOCRButton";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -67,6 +68,13 @@ const PlateSubmission: FC = () => {
   const handleHistorySelect = (plate: string, state: string) => {
     setLicensePlate(plate);
     setStateCode(state);
+  };
+
+  const handlePlateDetected = (detectedPlate: string, detectedState: string) => {
+    setLicensePlate(detectedPlate);
+    if (detectedState) {
+      setStateCode(detectedState);
+    }
   };
 
   const handlePlateSubmission = async () => {
@@ -142,6 +150,7 @@ const PlateSubmission: FC = () => {
             <Ionicons name="time-outline" size={26} color="#999" />
           </TouchableOpacity>
         )}
+        <PlateOCRButton onPlateDetected={handlePlateDetected} />
       </View>
 
       <TouchableOpacity
