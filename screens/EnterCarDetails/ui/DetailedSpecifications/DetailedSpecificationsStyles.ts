@@ -1,0 +1,111 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  detailedSpecsContainer: {
+    width: "100%",
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: "#2a2e2e",
+    overflow: "hidden",
+  },
+  specsTitleBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#3a3e3e",
+  },
+  specsTitleText: {
+    fontSize: 18,
+    fontFamily: "Aeonik",
+    color: "#95ff77",
+    fontWeight: "bold",
+  },
+  specSectionHeader: {
+    backgroundColor: "#333",
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  specSectionTitle: {
+    fontSize: 16,
+    fontFamily: "Aeonik",
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  specItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  specItemLabel: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#ddd",
+    flex: 1,
+  },
+  specItemValue: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#95ff77",
+    flex: 1,
+    textAlign: "right",
+  },
+  colorItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  colorSwatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "#fff",
+  },
+  colorName: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#fff",
+  },
+  recallItem: {
+    padding: 12,
+    marginVertical: 8,
+    backgroundColor: "#333",
+    borderRadius: 8,
+  },
+  recallCampaign: {
+    fontSize: 16,
+    fontFamily: "Aeonik",
+    color: "#95ff77",
+    marginBottom: 8,
+  },
+  recallSummary: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#fff",
+    marginBottom: 12,
+  },
+  recallDetails: {
+    marginTop: 8,
+  },
+  recallLabel: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#ddd",
+    marginBottom: 4,
+  },
+  recallText: {
+    fontSize: 14,
+    fontFamily: "Aeonik",
+    color: "#fff",
+  },
+}); 
