@@ -146,7 +146,7 @@ export const fetchCarSpecifications = async (
 
     const data = await response.json();
     console.log(
-      data,
+      // data,
       response,
       "fetchCarSpecifications",
       API_KEY,
