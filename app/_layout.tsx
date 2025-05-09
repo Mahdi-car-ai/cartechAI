@@ -17,7 +17,6 @@ import ChatScreen from "@/screens/ChatScreen";
 import EnterCarDetailsScreen from "@/screens/EnterCarDetails/ui/EnterCarDetails";
 import LoginScreen from "@/screens/LoginScreen";
 import SignupScreen from "@/screens/SignupScreen";
-import EditProfileScreen from "@/screens/EditProfileScreen";
 import CustomDrawer from "@/components/CustomDrawer";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
@@ -27,6 +26,7 @@ import CreatePostScreen from "@/screens/CreatePostScreen";
 import PostDetailsScreen from "@/screens/PostDetailsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ReduxProvider from "@/components/ReduxProvider";
+import EditProfileScreen from "@/screens/EditProfileScreen/ui/EditProfileScreen";
 
 // Declare the global variable type
 declare global {
