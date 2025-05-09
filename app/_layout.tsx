@@ -14,7 +14,7 @@ import {
 import HomeScreen from "../screens/HomeScreen";
 import CarDetailsScreen from "../screens/CarDetailsScreen";
 import ChatScreen from "@/screens/ChatScreen";
-import EnterCarDetailsScreen from "@/screens/EnterCarDetails";
+import EnterCarDetailsScreen from "@/screens/EnterCarDetails/ui/EnterCarDetails";
 import LoginScreen from "@/screens/LoginScreen";
 import SignupScreen from "@/screens/SignupScreen";
 import EditProfileScreen from "@/screens/EditProfileScreen";

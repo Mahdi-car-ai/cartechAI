@@ -32,6 +32,7 @@ import {
   fetchCarTrims,
   fetchCarSpecifications,
 } from "@/services/carApi";
+import { styles } from "@/screens/EnterCarDetails/ui/EnterCarDetailsStyles";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -62,6 +63,7 @@ export default function EnterCarDetailsScreen() {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
+  const [specLoading, setSpecLoading] = useState(false);
   const [years, setYears] = useState<string[]>([]);
   const [filteredYears, setFilteredYears] = useState<string[]>([]);
   const [makes, setMakes] = useState<string[]>([]);
@@ -176,6 +178,78 @@ export default function EnterCarDetailsScreen() {
     }
   };
 
+  const loadSpecificationsWithData = async (
+    year: string,
+    make: string,
+    model: string,
+    trim: string,
+  ) => {
+    try {
+      if (!year || !make || !model || !trim) {
+        return;
+      }
+
+      setLoading(true);
+      setSpecLoading(true);
+      const data = await fetchCarSpecifications(year, make, model, trim);
+
+      if (data) {
+        setSpecifications(data);
+
+        setCarDetails((prev) => ({
+          ...prev,
+          fuelType: data.engine?.displacement_l_ci || "",
+          engineCylinders:
+            data.engine?.engine_model?.replace(/[^0-9]/g, "") || "",
+          engineDisplacement: data.engine?.['displacement_(l_ci)']
+            ? `${data.engine['displacement_(l_ci)']}L`
+            : "",
+          vehicleType: data.basic?.vehicle_size || "",
+          transmissionStyle: data.transmission?.transmission_style || "",
+          driveType: data.drivetrain?.drive_type || "",
+          bodyClass: data.basic?.vehicle_size || "",
+          plantCity: "",
+          plantCountry: "",
+        }));
+      }
+    } catch (error: any) {
+      console.error("Error loading specifications:", error);
+
+      // Перевірка, чи помилка у форматі JSON рядка з повідомленням 'You don't have access to this API'
+      let errorObj = error;
+      if (typeof error === "string") {
+        try {
+          errorObj = JSON.parse(error);
+        } catch (e) {
+          // Ігноруємо помилку парсингу
+        }
+      }
+
+      if (
+        error?.message === "You don't have access to this API." ||
+        error?.statusCode === 401 ||
+        (error?.response && error?.response.status === 401) ||
+        errorObj?.statusCode === 401 ||
+        errorObj?.message === "You don't have access to this API."
+      ) {
+        Alert.alert(
+          "Access Error",
+          "You don't have access to this vehicle data API. Please check your API credentials or subscription.",
+          [{ text: "OK" }],
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Failed to load vehicle specifications. Please try again later.",
+          [{ text: "OK" }],
+        );
+      }
+    } finally {
+      setLoading(false);
+      setSpecLoading(false);
+    }
+  };
+
   const loadSpecifications = async () => {
     try {
       if (
@@ -188,6 +262,7 @@ export default function EnterCarDetailsScreen() {
       }
 
       setLoading(true);
+      setSpecLoading(true);
       const data = await fetchCarSpecifications(
         carDetails.modelYear,
         carDetails.make,
@@ -203,8 +278,8 @@ export default function EnterCarDetailsScreen() {
           fuelType: data.engine?.displacement_l_ci || "",
           engineCylinders:
             data.engine?.engine_model?.replace(/[^0-9]/g, "") || "",
-          engineDisplacement: data.engine?.displacement_l_ci
-            ? `${data.engine.displacement_l_ci}L`
+          engineDisplacement: data.engine?.['displacement_(l_ci)']
+            ? `${data.engine['displacement_(l_ci)']}L`
             : "",
           vehicleType: data.basic?.vehicle_size || "",
           transmissionStyle: data.transmission?.transmission_style || "",
@@ -214,21 +289,50 @@ export default function EnterCarDetailsScreen() {
           plantCountry: "",
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading specifications:", error);
+
+      // Перевірка, чи помилка у форматі JSON рядка з повідомленням 'You don't have access to this API'
+      let errorObj = error;
+      if (typeof error === "string") {
+        try {
+          errorObj = JSON.parse(error);
+        } catch (e) {
+          // Ігноруємо помилку парсингу
+        }
+      }
+
+      if (
+        error?.message === "You don't have access to this API." ||
+        error?.statusCode === 401 ||
+        (error?.response && error?.response.status === 401) ||
+        errorObj?.statusCode === 401 ||
+        errorObj?.message === "You don't have access to this API."
+      ) {
+        Alert.alert(
+          "Access Error",
+          "You don't have access to this vehicle data API. Please check your API credentials or subscription.",
+          [{ text: "OK" }],
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Failed to load vehicle specifications. Please try again later.",
+          [{ text: "OK" }],
+        );
+      }
     } finally {
       setLoading(false);
+      setSpecLoading(false);
     }
   };
 
-  // Fetch data from API when opening a modal
   const openModal = async (field: string) => {
     setActiveModal(field);
     setSearchText("");
 
     switch (field) {
       case "modelYear":
-        // Years are already loaded on component mount
         break;
       case "make":
         if (carDetails.modelYear) {
@@ -246,21 +350,17 @@ export default function EnterCarDetailsScreen() {
         }
         break;
       default:
-        // For other fields that might be added in the future
         break;
     }
   };
 
   const selectOption = async (field: string, value: string) => {
-    // Update the car details
     const updatedDetails = { ...carDetails, [field]: value };
 
-    // Reset dependent fields based on hierarchy
     if (field === "modelYear") {
       updatedDetails.make = "";
       updatedDetails.model = "";
       updatedDetails.trim = "";
-      // Reset all other specifications
       updatedDetails.fuelType = "";
       updatedDetails.engineCylinders = "";
       updatedDetails.engineDisplacement = "";
@@ -271,7 +371,6 @@ export default function EnterCarDetailsScreen() {
     } else if (field === "make") {
       updatedDetails.model = "";
       updatedDetails.trim = "";
-      // Reset all specifications
       updatedDetails.fuelType = "";
       updatedDetails.engineCylinders = "";
       updatedDetails.engineDisplacement = "";
@@ -281,7 +380,6 @@ export default function EnterCarDetailsScreen() {
       updatedDetails.bodyClass = "";
     } else if (field === "model") {
       updatedDetails.trim = "";
-      // Reset all specifications
       updatedDetails.fuelType = "";
       updatedDetails.engineCylinders = "";
       updatedDetails.engineDisplacement = "";
@@ -294,9 +392,13 @@ export default function EnterCarDetailsScreen() {
     setCarDetails(updatedDetails);
     setActiveModal(null);
 
-    // If trim was selected, load detailed specifications
     if (field === "trim") {
-      await loadSpecifications();
+      await loadSpecificationsWithData(
+        updatedDetails.modelYear,
+        updatedDetails.make,
+        updatedDetails.model,
+        updatedDetails.trim,
+      );
     }
   };
 
@@ -312,14 +414,10 @@ export default function EnterCarDetailsScreen() {
     try {
       setChatLoading(true);
 
-      // Use api service to create chat with bot
       const response = await api.post("/chats/create-with-bot");
 
-      // Add type assertion for the response data
       const chatId = response.data as string;
 
-      // Format carDetails to match the CarDetails interface from types/CarDetails.tsx
-      // expected by ChatScreen
       const formattedCarDetails = {
         Make: carDetails.make,
         Model: carDetails.model,
@@ -338,7 +436,6 @@ export default function EnterCarDetailsScreen() {
         PlantState: "",
         VehicleType: carDetails.vehicleType,
         DisplacementL: carDetails.engineDisplacement,
-        // Add other required fields with empty string defaults
         EngineConfiguration: "",
         FuelDeliveryType: "",
         SeatBeltsType: "",
@@ -463,7 +560,6 @@ export default function EnterCarDetailsScreen() {
         LaneCenteringAssistance: "",
       };
 
-      // Navigate to chat screen with the returned chat ID
       navigation.navigate("ChatScreen", {
         carDetails: formattedCarDetails,
         chatId: chatId,
@@ -478,7 +574,6 @@ export default function EnterCarDetailsScreen() {
     }
   };
 
-  // Determine if a field should be disabled based on dependencies
   const isFieldDisabled = (field: string) => {
     switch (field) {
       case "make":
@@ -492,9 +587,7 @@ export default function EnterCarDetailsScreen() {
     }
   };
 
-  // Render field based on type
   const renderCarDetailField = (key: string) => {
-    // Fields that depend on the selection sequence (year -> make -> model -> trim)
     if (["modelYear", "make", "model", "trim"].includes(key)) {
       return (
         <TouchableOpacity
@@ -525,7 +618,6 @@ export default function EnterCarDetailsScreen() {
       );
     }
 
-    // Fields that are populated from specifications
     if (
       [
         "fuelType",
@@ -544,7 +636,7 @@ export default function EnterCarDetailsScreen() {
             styles.input,
             { width: width },
             focusedInput === key && styles.inputFocused,
-            true && styles.disabledInput, // Always disabled as they are populated automatically
+            true && styles.disabledInput,
           ]}
           disabled={true}
         >
@@ -565,7 +657,6 @@ export default function EnterCarDetailsScreen() {
       );
     }
 
-    // Regular text inputs for plantCity and plantCountry
     return (
       <TextInput
         key={key}
@@ -587,11 +678,9 @@ export default function EnterCarDetailsScreen() {
     );
   };
 
-  // Render the appropriate content for the active modal
   const renderModalContent = () => {
     if (!activeModal) return null;
 
-    // Modal title based on activeModal
     const getModalTitle = () => {
       let title = activeModal
         .replace(/([A-Z])/g, " $1")
@@ -652,7 +741,6 @@ export default function EnterCarDetailsScreen() {
     );
   };
 
-  // Render the appropriate list for the active modal
   const renderModalList = () => {
     if (!activeModal) return null;
 
@@ -739,6 +827,15 @@ export default function EnterCarDetailsScreen() {
       >
         <Logo />
 
+        {specLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#95ff77" />
+            <Text style={styles.loadingText}>
+              Loading car specifications...
+            </Text>
+          </View>
+        )}
+
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
@@ -754,140 +851,8 @@ export default function EnterCarDetailsScreen() {
           disabled={!isAnyFieldFilled() || chatLoading}
           loading={chatLoading}
         />
-
-        {/* Unified modal for all selection types */}
         {renderModalContent()}
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    paddingBottom: 24,
-    height: "100%",
-    justifyContent: "center",
-    backgroundColor: "#1a1c1b",
-  },
-  chatButton: {
-    width: "auto",
-    paddingHorizontal: 16,
-  },
-  subtitle: {
-    fontFamily: "Aeonik",
-    fontSize: 16,
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: "Aeonik",
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  input: {
-    alignSelf: "center",
-    fontSize: 16,
-    borderColor: "#2a2e2e",
-    borderWidth: 1.5,
-    color: "#fff",
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 16,
-    fontFamily: "Aeonik",
-    justifyContent: "center",
-  },
-  disabledInput: {
-    borderColor: "#22241f",
-    backgroundColor: "#22241f",
-  },
-  inputText: {
-    fontSize: 16,
-    color: "#fff",
-    fontFamily: "Aeonik",
-  },
-  disabledText: {
-    color: "#555",
-  },
-  placeholderText: {
-    color: "#aaa",
-  },
-  inputFocused: {
-    borderColor: "#95ff77",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-  },
-  backButton: {
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-  },
-  modalContent: {
-    width: "90%",
-    height: "80%",
-    backgroundColor: "#1a1c1b",
-    borderRadius: 16,
-    padding: 16,
-    borderColor: "#2a2e2e",
-    borderWidth: 1.5,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: "Aeonik",
-    color: "#fff",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  searchInput: {
-    backgroundColor: "#2a2e2e",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    color: "#fff",
-    fontFamily: "Aeonik",
-  },
-  list: {
-    flex: 1,
-  },
-  listItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2a2e2e",
-  },
-  listItemText: {
-    fontSize: 16,
-    color: "#fff",
-    fontFamily: "Aeonik",
-  },
-  listItemDescription: {
-    fontSize: 12,
-    color: "#aaa",
-    fontFamily: "Aeonik",
-    marginTop: 4,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
