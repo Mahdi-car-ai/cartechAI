@@ -9,10 +9,10 @@ interface FormData {
   email: string;
   phoneNumber: string;
   companyName: string;
-  streetAddress: string;
-  streetAddressLine2: string;
+  streetAddress1: string;
+  streetAddress2: string;
   city: string;
-  postalCode: string;
+  postCode: string;
 }
 
 interface ProfileFormSectionProps {
@@ -91,9 +91,9 @@ const ProfileFormSection: FC<ProfileFormSectionProps> = ({
         style={styles.input}
         placeholder="Street Address"
         placeholderTextColor="#aaa"
-        value={formData.streetAddress}
+        value={formData.streetAddress1}
         onChangeText={(text) =>
-          setFormData({ ...formData, streetAddress: text })
+          setFormData({ ...formData, streetAddress1: text })
         }
       />
 
@@ -101,9 +101,9 @@ const ProfileFormSection: FC<ProfileFormSectionProps> = ({
         style={styles.input}
         placeholder="Street Address Line 2"
         placeholderTextColor="#aaa"
-        value={formData.streetAddressLine2}
+        value={formData.streetAddress2}
         onChangeText={(text) =>
-          setFormData({ ...formData, streetAddressLine2: text })
+          setFormData({ ...formData, streetAddress2: text })
         }
       />
 
@@ -119,8 +119,8 @@ const ProfileFormSection: FC<ProfileFormSectionProps> = ({
         style={styles.input}
         placeholder="Postal / Zip Code"
         placeholderTextColor="#aaa"
-        value={formData.postalCode}
-        onChangeText={(text) => setFormData({ ...formData, postalCode: text })}
+        value={formData.postCode}
+        onChangeText={(text) => setFormData({ ...formData, postCode: text })}
         keyboardType="numeric"
       />
     </>

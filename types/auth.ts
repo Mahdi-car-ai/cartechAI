@@ -14,10 +14,10 @@ export interface SignupFormStep1 {
 export interface SignupFormStep2 {
   phoneNumber: string;
   companyName: string;
-  streetAddress: string;
-  streetAddressLine2: string;
+  streetAddress1: string;
+  streetAddress2: string;
   city: string;
-  postalCode: string;
+  postCode: string;
 }
 
 export interface AuthTokens {
@@ -42,10 +42,10 @@ export interface SignupData {
   phoneNumber: string;
   companyName?: string;
   address?: {
-    streetAddress?: string;
-    streetAddressLine2?: string;
+    streetAddress1?: string;
+    streetAddress2?: string;
     city?: string;
-    postalCode?: string;
+    postCode?: string;
   };
 }
 
@@ -58,9 +58,9 @@ export interface UserProfile {
   phoneNumber?: string;
   companyName?: string;
   address?: {
-    streetAddress?: string;
-    streetAddressLine2?: string;
+    streetAddress1?: string;
+    streetAddress2?: string;
     city?: string;
-    postalCode?: string;
+    postCode?: string;
   };
 }

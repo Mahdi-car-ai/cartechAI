@@ -13,7 +13,12 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Icon } from "react-native-elements";
 import Logo from "@/components/ui/Logo";
-import { getChatMessages, getCommunityChat, Message, CommunityChat } from "@/utils/Community";
+import {
+  getChatMessages,
+  getCommunityChat,
+  Message,
+  CommunityChat,
+} from "@/utils/Community";
 import socketManager from "@/services/SocketManager";
 
 interface Response {
@@ -30,7 +35,10 @@ type RootStackParamList = {
   [key: string]: undefined | object;
 };
 
-type PostDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PostDetailsScreen'>;
+type PostDetailsScreenRouteProp = RouteProp<
+  RootStackParamList,
+  "PostDetailsScreen"
+>;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const PostDetailsScreen = () => {
@@ -48,7 +56,7 @@ const PostDetailsScreen = () => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const flatListRef = useRef<FlatList | null>(null);
-  
+
   // Create a ref for timeout to track message response
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -56,7 +64,7 @@ const PostDetailsScreen = () => {
     fetchChatDetails();
     fetchMessages();
     connectToSocket();
-    
+
     return () => {
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
@@ -89,14 +97,15 @@ const PostDetailsScreen = () => {
         }
 
         if (messageData.senderId) {
-          const isBot = messageData.senderId === "00000000-0000-0000-0000-000000000000";
+          const isBot =
+            messageData.senderId === "00000000-0000-0000-0000-000000000000";
 
           // If bot message, remove any typing indicators
           if (isBot) {
             console.log("Removing typing indicators - bot message received");
             setMessages((prevMessages) => {
               const updatedMessages = prevMessages.filter(
-                (msg) => !msg.id.startsWith("typing")
+                (msg) => !msg.id.startsWith("typing"),
               );
 
               const removedCount = prevMessages.length - updatedMessages.length;
@@ -115,12 +124,17 @@ const PostDetailsScreen = () => {
               (msg) =>
                 (msg.id && msg.id === messageData.id) ||
                 (msg.content === messageData.content &&
-                  ((isBot && msg.senderId === "00000000-0000-0000-0000-000000000000") || 
-                   (!isBot && msg.senderId !== "00000000-0000-0000-0000-000000000000")))
+                  ((isBot &&
+                    msg.senderId === "00000000-0000-0000-0000-000000000000") ||
+                    (!isBot &&
+                      msg.senderId !==
+                        "00000000-0000-0000-0000-000000000000"))),
             );
 
             if (!messageExists) {
-              console.log(`Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`);
+              console.log(
+                `Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`,
+              );
               return [
                 ...prevMessages,
                 {
@@ -131,13 +145,15 @@ const PostDetailsScreen = () => {
                 } as Response,
               ];
             } else {
-              console.log(`Message already exists in UI: ${messageData.content}`);
+              console.log(
+                `Message already exists in UI: ${messageData.content}`,
+              );
             }
             return prevMessages;
           });
         }
       });
-      
+
       // Set up event listeners
       const onReconnected = () => {
         console.log("SOCKET RECONNECTED - Clearing timeouts and indicators");
@@ -147,7 +163,7 @@ const PostDetailsScreen = () => {
         }
 
         setMessages((prevMessages) =>
-          prevMessages.filter((msg) => !msg.id.startsWith("typing"))
+          prevMessages.filter((msg) => !msg.id.startsWith("typing")),
         );
 
         socketManager.joinRoom(chatId);
@@ -164,7 +180,7 @@ const PostDetailsScreen = () => {
       socketManager.events.on("reconnected", onReconnected);
       socketManager.events.on("authenticated", onAuthenticated);
       socketManager.events.on("connected", onReconnected);
-      
+
       // Check connection periodically
       const connectionCheckInterval = setInterval(() => {
         if (!socketManager.isConnected()) {
@@ -172,14 +188,13 @@ const PostDetailsScreen = () => {
           connectToSocket();
         }
       }, 10000);
-      
+
       return () => {
         clearInterval(connectionCheckInterval);
         socketManager.events.off("reconnected", onReconnected);
         socketManager.events.off("authenticated", onAuthenticated);
         socketManager.events.off("connected", onReconnected);
       };
-      
     } catch (error) {
       console.error("Error connecting to socket:", error);
       setSocketConnected(false);
@@ -190,7 +205,7 @@ const PostDetailsScreen = () => {
     setLoading(true);
     try {
       const communityChat = await getCommunityChat(chatId);
-      
+
       if (communityChat) {
         setChat(communityChat);
       } else {
@@ -210,21 +225,23 @@ const PostDetailsScreen = () => {
     try {
       setLoading(true);
       const response = await getChatMessages(chatId, pageNum);
-      
-      const formattedMessages = response.messages.map((msg): Response => ({
-        id: msg.id,
-        content: msg.content,
-        senderId: msg.senderId,
-        timestamp: msg.timestamp,
-        votes: 0
-      }));
-      
+
+      const formattedMessages = response.messages.map(
+        (msg): Response => ({
+          id: msg.id,
+          content: msg.content,
+          senderId: msg.senderId,
+          timestamp: msg.timestamp,
+          votes: 0,
+        }),
+      );
+
       if (pageNum === 1) {
         setMessages(formattedMessages);
       } else {
-        setMessages(prev => [...prev, ...formattedMessages]);
+        setMessages((prev) => [...prev, ...formattedMessages]);
       }
-      
+
       setHasMoreMessages(response.total > pageNum * 10);
       setPage(pageNum);
     } catch (error) {
@@ -250,15 +267,17 @@ const PostDetailsScreen = () => {
   const handleAddResponse = async () => {
     if (!responseText.trim()) return;
     setSubmitting(true);
-    
+
     try {
       if (!socketManager.isConnected()) {
-        console.log("Socket not connected. Reconnecting before sending message...");
+        console.log(
+          "Socket not connected. Reconnecting before sending message...",
+        );
         await socketManager.connect();
         socketManager.joinRoom(chatId);
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
-      
+
       // Add the user message to the UI immediately
       const newMessage: Response = {
         id: `user-${Date.now()}`,
@@ -266,15 +285,15 @@ const PostDetailsScreen = () => {
         senderId: "user", // This will be replaced with actual user ID from the response
         timestamp: new Date().toISOString(),
       };
-      
+
       console.log(`Sending message: "${responseText}"`);
-      
-      setMessages(prevMessages => [...prevMessages, newMessage]);
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
       setResponseText("");
-      
+
       if (socketConnected && socketManager.isConnected()) {
         socketManager.sendMessage(responseText);
-        
+
         // Add typing indicator
         const typingId = `typing-${Date.now()}`;
         const typingMessage: Response = {
@@ -283,51 +302,57 @@ const PostDetailsScreen = () => {
           senderId: "00000000-0000-0000-0000-000000000000",
           timestamp: new Date().toISOString(),
         };
-        
-        setMessages(prevMessages => [...prevMessages, typingMessage]);
-        
+
+        setMessages((prevMessages) => [...prevMessages, typingMessage]);
+
         if (messageTimeoutRef.current) {
           clearTimeout(messageTimeoutRef.current);
         }
-        
+
         const checkForResponse = () => {
           console.log(`Checking timeout for message: "${responseText}"`);
-          setMessages(prevMessages => {
-            const typingExists = prevMessages.some(msg => msg.id === typingId);
-            
+          setMessages((prevMessages) => {
+            const typingExists = prevMessages.some(
+              (msg) => msg.id === typingId,
+            );
+
             if (typingExists) {
-              console.log("No response received within timeout period, showing error message");
-              return prevMessages.map(msg => 
+              console.log(
+                "No response received within timeout period, showing error message",
+              );
+              return prevMessages.map((msg) =>
                 msg.id === typingId
                   ? {
                       ...msg,
                       id: `error-${Date.now()}`,
-                      content: "Sorry, I didn't receive a response from the server. Please try again.",
+                      content:
+                        "Sorry, I didn't receive a response from the server. Please try again.",
                     }
-                  : msg
+                  : msg,
               );
             }
             return prevMessages;
           });
-          
+
           console.log("Attempting to reconnect socket after timeout");
           socketManager.disconnect();
-          socketManager.connect()
+          socketManager
+            .connect()
             .then(() => {
               socketManager.joinRoom(chatId);
             })
-            .catch(error => {
+            .catch((error) => {
               console.error("Failed to reconnect socket:", error);
             });
-            
+
           messageTimeoutRef.current = null;
         };
-        
+
         messageTimeoutRef.current = setTimeout(checkForResponse, 30000);
       } else {
         Alert.alert(
           "Connection Error",
-          "Failed to send message. Please check your connection and try again."
+          "Failed to send message. Please check your connection and try again.",
         );
       }
     } catch (error) {
@@ -362,7 +387,9 @@ const PostDetailsScreen = () => {
   };
 
   if (loading && !messages.length) {
-    return <ActivityIndicator size="large" color="#95ff77" style={{ flex: 1 }} />;
+    return (
+      <ActivityIndicator size="large" color="#95ff77" style={{ flex: 1 }} />
+    );
   }
 
   return (
@@ -372,7 +399,10 @@ const PostDetailsScreen = () => {
         <View style={styles.logoWrapper}>
           <Logo />
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("CommunityScreen")} style={styles.closeButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("CommunityScreen")}
+          style={styles.closeButton}
+        >
           <Icon name="close" type="material" color="#fff" size={24} />
         </TouchableOpacity>
       </View>
@@ -387,7 +417,10 @@ const PostDetailsScreen = () => {
 
       {/* Load More Button */}
       {hasMoreMessages && (
-        <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
+        <TouchableOpacity
+          style={styles.loadMoreButton}
+          onPress={handleLoadMore}
+        >
           <Text style={styles.loadMoreText}>Load More</Text>
         </TouchableOpacity>
       )}
@@ -398,15 +431,26 @@ const PostDetailsScreen = () => {
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={[
-            styles.responseCard,
-            isBotMessage(item.senderId) ? styles.botMessage : styles.userMessage
-          ]}>
+          <View
+            style={[
+              styles.responseCard,
+              isBotMessage(item.senderId)
+                ? styles.botMessage
+                : styles.userMessage,
+            ]}
+          >
             {/* Message Content */}
             <View style={styles.responseContent}>
               {/* Sender Info and Date */}
               <View style={styles.responseHeader}>
-                <Text style={styles.posterName}>
+                <Text
+                  style={[
+                    styles.posterName,
+                    isBotMessage(item.senderId)
+                      ? styles.botName
+                      : styles.userName,
+                  ]}
+                >
                   {isBotMessage(item.senderId) ? "CarTechAI" : "You"}
                 </Text>
                 <Text style={styles.postedDate}>
@@ -415,16 +459,28 @@ const PostDetailsScreen = () => {
               </View>
 
               {/* Response Text */}
-              <Text style={styles.responseText}>{item.content}</Text>
+              <Text
+                style={[
+                  styles.responseText,
+                  isBotMessage(item.senderId)
+                    ? styles.botResponseText
+                    : styles.userResponseText,
+                ]}
+              >
+                {item.content}
+              </Text>
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.noResponsesText}>No messages yet.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.noResponsesText}>No messages yet.</Text>
+        }
         contentContainerStyle={styles.flatListContent}
         onContentSizeChange={scrollToBottom}
         onLayout={scrollToBottom}
         onScrollBeginDrag={() => setIsUserScrolling(true)}
         onMomentumScrollEnd={() => setIsUserScrolling(false)}
+        showsVerticalScrollIndicator={false}
       />
 
       {/* Add Response Input */}
@@ -436,8 +492,16 @@ const PostDetailsScreen = () => {
           value={responseText}
           onChangeText={setResponseText}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleAddResponse} disabled={submitting}>
-          {submitting ? <ActivityIndicator color="#fff" /> : <Icon name="send" size={20} color="#fff" />}
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={handleAddResponse}
+          disabled={submitting}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Icon name="send" size={20} color="#fff" />
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -497,24 +561,30 @@ const styles = StyleSheet.create({
     fontFamily: "Aeonik",
   },
   responseCard: {
-    backgroundColor: "#2a2e2e",
-    padding: 16,
-    borderRadius: 16,
+    padding: 12,
+    borderRadius: 20,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
   },
   userMessage: {
     alignSelf: "flex-end",
     backgroundColor: "#2a2e2e",
     maxWidth: "80%",
+    borderBottomRightRadius: 4,
+    marginLeft: "10%",
   },
   botMessage: {
     alignSelf: "flex-start",
     backgroundColor: "#95ff77",
     maxWidth: "80%",
+    borderBottomLeftRadius: 4,
+    marginRight: "10%",
   },
-  responseContent: {
-    flex: 1,
-  },
+  responseContent: {},
   responseHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -522,37 +592,53 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   posterName: {
-    fontSize: 16,
-    color: "#95ff77",
+    fontSize: 14,
     fontFamily: "Aeonik",
+    fontWeight: "600",
+  },
+  userName: {
+    color: "#95ff77",
+  },
+  botName: {
+    color: "#2a2e2e",
   },
   postedDate: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#aaa",
     fontFamily: "Aeonik",
   },
   responseText: {
     fontSize: 16,
-    color: "#fff",
     fontFamily: "Aeonik",
+    lineHeight: 22,
+  },
+  botResponseText: {
+    color: "#2a2e2e",
+  },
+  userResponseText: {
+    color: "#fff",
   },
   responseInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#2a2e2e",
-    borderRadius: 16,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 16,
+    marginTop: 8,
   },
   responseInput: {
     flex: 1,
     color: "#fff",
     fontSize: 14,
     fontFamily: "Aeonik",
+    paddingVertical: 8,
   },
   sendButton: {
     padding: 8,
+    backgroundColor: "#95ff77",
+    borderRadius: 50,
   },
   noResponsesText: {
     fontSize: 14,
@@ -563,6 +649,7 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 16,
+    paddingTop: 8,
   },
 });
 

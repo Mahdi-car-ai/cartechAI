@@ -158,10 +158,10 @@ export default function LoginScreen() {
         phoneNumber: "",
         companyName: "",
         address: {
-          streetAddress: "",
-          streetAddressLine2: "",
+          streetAddress1: "",
+          streetAddress2: "",
           city: "",
-          postalCode: "",
+          postCode: "",
         },
       };
       await AsyncStorage.setItem("userProfile", JSON.stringify(basicProfile));

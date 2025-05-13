@@ -33,10 +33,10 @@ interface EditProfileForm {
   userLogo?: string;
   phoneNumber: string;
   companyName: string;
-  streetAddress: string;
-  streetAddressLine2: string;
+  streetAddress1: string;
+  streetAddress2: string;
   city: string;
-  postalCode: string;
+  postCode: string;
 }
 
 interface PasswordChangeForm {
@@ -60,10 +60,10 @@ export default function EditProfileScreen() {
     userLogo: "",
     phoneNumber: "",
     companyName: "",
-    streetAddress: "",
-    streetAddressLine2: "",
+    streetAddress1: "",
+    streetAddress2: "",
     city: "",
-    postalCode: "",
+    postCode: "",
   });
 
   const [passwordForm, setPasswordForm] = useState<PasswordChangeForm>({
@@ -91,10 +91,10 @@ export default function EditProfileScreen() {
           userLogo: userProfile.userLogo || "",
           phoneNumber: userProfile.phoneNumber || "",
           companyName: userProfile.companyName || "",
-          streetAddress: userProfile.address?.streetAddress || "",
-          streetAddressLine2: userProfile.address?.streetAddressLine2 || "",
+          streetAddress1: userProfile.address?.streetAddress1 || "",
+          streetAddress2: userProfile.address?.streetAddress2 || "",
           city: userProfile.address?.city || "",
-          postalCode: userProfile.address?.postalCode || "",
+          postCode: userProfile.address?.postCode || "",
         });
       }
     } catch (error) {
@@ -204,10 +204,10 @@ export default function EditProfileScreen() {
         phoneNumber: formData.phoneNumber,
         companyName: formData.companyName,
         address: {
-          streetAddress: formData.streetAddress,
-          streetAddressLine2: formData.streetAddressLine2,
+          streetAddress1: formData.streetAddress1,
+          streetAddress2: formData.streetAddress2,
           city: formData.city,
-          postalCode: formData.postalCode,
+          postCode: formData.postCode,
         },
       };
 

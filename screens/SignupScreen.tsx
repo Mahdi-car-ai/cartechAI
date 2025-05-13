@@ -57,10 +57,10 @@ export default function SignupScreen() {
   const [step2Form, setStep2Form] = useState<SignupFormStep2>({
     phoneNumber: "",
     companyName: "",
-    streetAddress: "",
-    streetAddressLine2: "",
+    streetAddress1: "",
+    streetAddress2: "",
     city: "",
-    postalCode: "",
+    postCode: "",
   });
 
   // Google auth
@@ -239,10 +239,10 @@ export default function SignupScreen() {
         phoneNumber: step2Form.phoneNumber,
         companyName: step2Form.companyName,
         address: {
-          streetLine1: step2Form.streetAddress,
-          streetLine2: step2Form.streetAddressLine2,
+          streetLine1: step2Form.streetAddress1,
+          streetLine2: step2Form.streetAddress2,
           city: step2Form.city,
-          postCode: step2Form.postalCode,
+          postCode: step2Form.postCode,
         },
       };
 
@@ -268,10 +268,10 @@ export default function SignupScreen() {
         phoneNumber: step2Form.phoneNumber,
         companyName: step2Form.companyName,
         address: {
-          streetAddress: step2Form.streetAddress,
-          streetAddressLine2: step2Form.streetAddressLine2,
+          streetAddress1: step2Form.streetAddress1,
+          streetAddress2: step2Form.streetAddress2,
           city: step2Form.city,
-          postalCode: step2Form.postalCode,
+          postCode: step2Form.postCode,
         },
       };
 
@@ -473,9 +473,9 @@ export default function SignupScreen() {
           style={styles.input}
           placeholder="Street Address"
           placeholderTextColor="#aaa"
-          value={step2Form.streetAddress}
+          value={step2Form.streetAddress1}
           onChangeText={(text) =>
-            setStep2Form({ ...step2Form, streetAddress: text })
+            setStep2Form({ ...step2Form, streetAddress1: text })
           }
         />
 
@@ -483,9 +483,9 @@ export default function SignupScreen() {
           style={styles.input}
           placeholder="Street Address Line 2"
           placeholderTextColor="#aaa"
-          value={step2Form.streetAddressLine2}
+          value={step2Form.streetAddress2}
           onChangeText={(text) =>
-            setStep2Form({ ...step2Form, streetAddressLine2: text })
+            setStep2Form({ ...step2Form, streetAddress2: text })
           }
         />
 
@@ -501,9 +501,9 @@ export default function SignupScreen() {
           style={styles.input}
           placeholder="Postal / Zip Code"
           placeholderTextColor="#aaa"
-          value={step2Form.postalCode}
+          value={step2Form.postCode}
           onChangeText={(text) =>
-            setStep2Form({ ...step2Form, postalCode: text })
+            setStep2Form({ ...step2Form, postCode: text })
           }
           keyboardType="numeric"
         />
