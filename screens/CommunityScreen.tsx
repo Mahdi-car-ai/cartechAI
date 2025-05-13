@@ -12,34 +12,13 @@ import { useNavigation } from "@react-navigation/native";
 import { Icon } from "react-native-elements";
 import Logo from "@/components/ui/Logo";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  where,
-  CollectionReference,
-  DocumentData,
-  Query,
-} from "firebase/firestore";
-import { auth } from "@/config/firebaseConfig";
 import { StackNavigationProp } from "@react-navigation/stack";
-
-// Define post interface
-interface Post {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  created_at: number | string;
-  user_id: string;
-  [key: string]: any; // For any other fields in the post
-}
+import { getCommunityChats, CommunityChat } from "@/utils/Community";
 
 // Define navigation types
 type RootStackParamList = {
   CreatePostScreen: undefined;
-  PostDetailsScreen: { postId: string };
+  PostDetailsScreen: { chatId: string };
   [key: string]: undefined | object;
 };
 
@@ -47,72 +26,49 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const CommunityScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [chats, setChats] = useState<CommunityChat[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [activeFilter, setActiveFilter] = useState("All"); // State for active filter
 
   useEffect(() => {
-    fetchPosts();
-  }, [activeFilter]); // Refetch posts when the filter changes
+    fetchChats();
+  }, [activeFilter]); // Refetch chats when the filter changes
 
-  const fetchPosts = async (searchQuery = "") => {
+  const fetchChats = async (searchQuery = "") => {
     setLoading(true);
-    const db = getFirestore();
-    let postsRef: CollectionReference<DocumentData> = collection(
-      db,
-      "community_posts",
-    );
-    let postsQuery: Query<DocumentData> = postsRef;
-
-    // Add search query filter
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      postsQuery = query(
-        postsRef,
-        where("title_lowercase", ">=", lowerCaseQuery),
-        where("title_lowercase", "<=", lowerCaseQuery + "\uf8ff"),
-      );
-    }
-
-    // Add status filter
-    if (activeFilter === "Open") {
-      postsQuery = query(postsRef, where("status", "==", "open"));
-    } else if (activeFilter === "Closed") {
-      postsQuery = query(postsRef, where("status", "==", "closed"));
-    } else if (activeFilter === "Posted By You") {
-      postsQuery = query(
-        postsRef,
-        where("user_id", "==", auth.currentUser!.uid),
-      );
-    }
-
     try {
-      const querySnapshot = await getDocs(postsQuery);
-      const postList: Post[] = querySnapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          }) as Post,
-      );
-      setPosts(postList);
+      const communityChats = await getCommunityChats();
+      
+      // Filter chats based on search query
+      let filteredChats = communityChats;
+      if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        filteredChats = communityChats.filter(chat => 
+          chat.topic.toLowerCase().includes(lowerCaseQuery) || 
+          chat.description.toLowerCase().includes(lowerCaseQuery)
+        );
+      }
+      
+      setChats(filteredChats);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching community chats:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = () => {
-    fetchPosts(searchText.trim());
+    fetchChats(searchText.trim());
   };
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
+    // Note: Filters would need to be implemented with backend filtering 
+    // or moved to local filtering based on available data
   };
 
-  const formatTimestamp = (timestamp: number | string) => {
+  const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return "Unknown";
     try {
       const date = new Date(timestamp);
@@ -176,11 +132,11 @@ const CommunityScreen = () => {
           <TouchableOpacity
             style={[
               styles.filterButton,
-              activeFilter === "Open" && styles.activeFilterButton,
+              activeFilter === "Popular" && styles.activeFilterButton,
             ]}
-            onPress={() => handleFilterChange("Open")}
+            onPress={() => handleFilterChange("Popular")}
           >
-            <Text style={styles.filterButtonText}>Open</Text>
+            <Text style={styles.filterButtonText}>Popular</Text>
           </TouchableOpacity>
         </View>
 
@@ -188,52 +144,52 @@ const CommunityScreen = () => {
           <TouchableOpacity
             style={[
               styles.filterButton,
-              activeFilter === "Closed" && styles.activeFilterButton,
+              activeFilter === "Recent" && styles.activeFilterButton,
             ]}
-            onPress={() => handleFilterChange("Closed")}
+            onPress={() => handleFilterChange("Recent")}
           >
-            <Text style={styles.filterButtonText}>Closed</Text>
+            <Text style={styles.filterButtonText}>Recent</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.filterButton,
-              activeFilter === "Posted By You" && styles.activeFilterButton,
+              activeFilter === "My Topics" && styles.activeFilterButton,
             ]}
-            onPress={() => handleFilterChange("Posted By You")}
+            onPress={() => handleFilterChange("My Topics")}
           >
-            <Text style={styles.filterButtonText}>Posted By You</Text>
+            <Text style={styles.filterButtonText}>My Topics</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Posts List */}
+      {/* Chats List */}
       {loading ? (
         <ActivityIndicator size="large" color="#95ff77" />
       ) : (
         <FlatList
-          data={posts}
+          data={chats}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.postCard}
               onPress={() =>
-                navigation.navigate("PostDetailsScreen", { postId: item.id })
+                navigation.navigate("PostDetailsScreen", { chatId: item.id })
               }
             >
               <View style={styles.postContent}>
                 <View style={styles.postText}>
-                  <Text style={styles.postTitle}>{item.title}</Text>
+                  <Text style={styles.postTitle}>{item.topic}</Text>
                   <Text style={styles.postDescription} numberOfLines={2}>
                     {item.description}
                   </Text>
                   <Text style={styles.askedAtText}>
-                    Asked on {formatTimestamp(item.created_at)}
+                    Created on {formatTimestamp(item.createdAt)}
                   </Text>
                 </View>
                 <View style={styles.statusBadge}>
                   <Text style={styles.postStatus}>
-                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    {item.usersCount || 0} users
                   </Text>
                 </View>
               </View>

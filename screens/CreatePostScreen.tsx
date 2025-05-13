@@ -11,9 +11,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Icon } from "react-native-elements";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
 import Logo from "@/components/ui/Logo";
-import { auth } from "@/config/firebaseConfig";
+import { createCommunityChat } from "@/utils/Community";
 
 // Define the navigation types
 type RootStackParamList = {
@@ -37,24 +36,17 @@ const CreatePostScreen = () => {
     }
 
     setLoading(true);
-    const db = getFirestore();
-    const postData = {
-      title,
-      title_lowercase: title.toLowerCase(), // Add lowercase version of the title
-      description,
-      user_id: auth.currentUser!.uid,
-      status: "open", // Default status is open
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
     try {
-      await addDoc(collection(db, "community_posts"), postData);
-      Alert.alert("Success", "Your post has been added.");
-      navigation.goBack(); // Go back to the community screen
+      const result = await createCommunityChat(title, description);
+      if (result) {
+        Alert.alert("Success", "Your community topic has been created.");
+        navigation.goBack(); // Go back to the community screen
+      } else {
+        Alert.alert("Error", "Could not create topic. Please try again.");
+      }
     } catch (error) {
-      console.error("Error creating post:", error);
-      Alert.alert("Error", "Could not create post. Try again.");
+      console.error("Error creating community topic:", error);
+      Alert.alert("Error", "Could not create topic. Try again.");
     } finally {
       setLoading(false);
     }
@@ -72,14 +64,14 @@ const CreatePostScreen = () => {
       {/* Input Fields */}
       <TextInput
         style={styles.input}
-        placeholder="Enter post title"
+        placeholder="Enter topic title"
         placeholderTextColor="#aaa"
         value={title}
         onChangeText={setTitle}
       />
       <TextInput
         style={[styles.input, styles.descriptionInput]}
-        placeholder="Describe your issue..."
+        placeholder="Describe your topic..."
         placeholderTextColor="#aaa"
         value={description}
         onChangeText={setDescription}
@@ -88,7 +80,7 @@ const CreatePostScreen = () => {
 
       {/* Submit Button */}
       <TouchableOpacity style={styles.submitButton} onPress={handlePostCreation} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Post</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Create</Text>}
       </TouchableOpacity>
 
       {/* Cancel Button */}
@@ -153,7 +145,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Aeonik",
     color: "#fff",
-    
   },
 });
 
