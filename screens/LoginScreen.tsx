@@ -39,8 +39,8 @@ type RootStackParamList = {
 
 export default function LoginScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState("jkdumpkj@gmail.com");
-  const [password, setPassword] = useState("Developer2024");
+  const [email, setEmail] = useState("admin@dev.com");
+  const [password, setPassword] = useState("Qwertyuiop123");
   const [loading, setLoading] = useState(false);
   const width = useWindowDimensions().width * 0.9;
 

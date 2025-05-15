@@ -354,7 +354,9 @@ const ChatScreen = () => {
                 ? "bot"
                 : "user",
             timestamp: new Date(msg.timestamp),
-            type: msg.type,
+            type: (msg.type === "text" || msg.type === "image" || msg.type === "error" || msg.type === "system") 
+              ? msg.type 
+              : "text", // Default to "text" if type is not one of the allowed values
           };
 
           return message;

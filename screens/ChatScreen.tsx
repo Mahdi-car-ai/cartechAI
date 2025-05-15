@@ -25,9 +25,19 @@ import socketManager from "@/services/SocketManager";
 import { getChatMessages, Message as ApiMessage } from "@/utils/Chat";
 import { ChatMessage } from "@/types/chat";
 import { API_URL } from "@/constants/Environment";
+import api from "@/services/api";
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
+
+// Define the expected response type for image upload
+interface ImageUploadResponse {
+  message?: {
+    id: string;
+    content: string;
+    timestamp: string;
+  };
+}
 
 const ChatScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -125,6 +135,7 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
+        exif: false
       });
 
       if (!result.canceled) {
@@ -153,6 +164,7 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
+        exif: false
       });
 
       if (!result.canceled) {
@@ -191,49 +203,63 @@ const ChatScreen = () => {
     setMessages((prevMessages) => [...prevMessages, loadingMessage]);
 
     try {
-      const formData = new FormData();
+      // Prepare the image for upload
       const filename = imageUri.split("/").pop() || "image.jpg";
-      const match = /\.(\w+)$/.exec(filename);
+      const match = /\.(\w+)$/.exec(filename.toLowerCase());
       const type = match ? `image/${match[1]}` : "image/jpeg";
-
-      // @ts-ignore
+      
+      console.log(`Preparing image: ${imageUri}`);
+      console.log(`Filename: ${filename}, Type: ${type}`);
+      
+      const formData = new FormData();
+      
+      // @ts-ignore - FormData expects a Blob but React Native uses objects
       formData.append("file", {
         uri: imageUri,
         name: filename,
         type,
       });
 
-      const response = await fetch(`${API_URL}/upload/message/${chatId}`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      // Add text message to form data if needed
+      if (text.trim()) {
+        formData.append("message", text);
+        console.log(`Added message to form data: ${text}`);
+      }
+
+      console.log(`Uploading image to: ${API_URL}/upload/message/${chatId}`);
+      
+      // Use api service to upload image
+      const response = await api.post<ImageUploadResponse>(
+        `/upload/message/${chatId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Accept": "application/json",
+          },
+        }
+      );
 
       // Remove the loading message
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg.id !== loadingId),
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const responseData = await response.json();
-      console.log("Image upload response:", responseData);
+      console.log("Image upload response status:", response.status);
+      console.log("Image upload response:", response.data);
 
       // Replace temporary message with the actual one from the server if available
-      if (responseData.message && responseData.message.id) {
+      if (response.data?.message && typeof response.data.message === 'object') {
+        const messageData = response.data.message;
         setMessages((prevMessages) =>
           prevMessages.map((msg) =>
             msg.id === tempId
               ? {
-                  id: responseData.message.id,
-                  text: responseData.message.content,
+                  id: messageData.id || tempId,
+                  text: messageData.content || "Image",
                   sender: "user",
                   type: "image",
-                  timestamp: new Date(responseData.message.timestamp),
+                  timestamp: messageData.timestamp ? new Date(messageData.timestamp) : new Date(),
                 }
               : msg,
           ),
