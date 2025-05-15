@@ -21,6 +21,7 @@ export interface ChatMessage {
   message?: string;
   sender: string;
   images?: string[];
+  type?: 'text' | 'image' | 'error' | 'system';
   youtubeVideo?: {
     title: string;
     link: string;

@@ -54,6 +54,168 @@ const ChatScreen = () => {
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] =
     useState<boolean>(false);
 
+  /**
+   * Prepare image for upload, handling different formats
+   */
+  const prepareImageForUpload = (uri: string): { uri: string; type: string; name: string } => {
+    // Convert file extension to lowercase for easier checking
+    const lowercaseUri = uri.toLowerCase();
+    
+    // Extract filename from URI
+    let filename = uri.split("/").pop() || "image.jpg";
+    
+    // Determine type based on extension
+    let mimeType = "image/jpeg"; // Default mime type
+    
+    // Check for known image formats
+    if (lowercaseUri.endsWith(".png")) {
+      mimeType = "image/png";
+    } else if (lowercaseUri.endsWith(".gif")) {
+      mimeType = "image/gif";
+    } else if (lowercaseUri.endsWith(".webp")) {
+      mimeType = "image/webp";
+    } else if (lowercaseUri.endsWith(".heic") || lowercaseUri.endsWith(".heif")) {
+      // For HEIC images, we'll force the extension to be .jpg since 
+      // most servers can't handle HEIC files directly
+      mimeType = "image/jpeg";
+      filename = filename.replace(/\.heic|\.heif/i, ".jpg");
+    }
+    
+    // Log what we're doing with the image
+    console.log(`Preparing image: ${uri}`);
+    console.log(`Filename: ${filename}, Type: ${mimeType}`);
+    
+    return {
+      uri,
+      name: filename,
+      type: mimeType
+    };
+  };
+
+  const handleImageMessage = async (imageUri: string, text: string) => {
+    if (!chatId) {
+      console.error("Chat ID is missing. Cannot store messages.");
+      return;
+    }
+
+    try {
+      // Prepare the image for upload
+      const imageFile = prepareImageForUpload(imageUri);
+      
+      // Create form data - make sure we're using the right field name expected by the server
+      const formData = new FormData();
+      
+      console.log(`Creating form data with image: ${imageFile.uri}`);
+      console.log(`Field name: file, filename: ${imageFile.name}, type: ${imageFile.type}`);
+      
+      // @ts-ignore - FormData expects a Blob but React Native uses objects
+      formData.append("file", {
+        uri: imageFile.uri,
+        name: imageFile.name,
+        type: imageFile.type,
+      });
+
+      // Add text message to form data if needed
+      if (text.trim()) {
+        formData.append("message", text);
+        console.log(`Added message to form data: ${text}`);
+      }
+
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        text: text || "Image",
+        sender: "user",
+        type: "image",
+      };
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+      console.log(`Uploading image to: ${API_URL}/upload/message/${chatId}`);
+      
+      // Make the API request
+      const response = await fetch(`${API_URL}/upload/message/${chatId}`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Accept": "application/json",
+        },
+      });
+
+      // Log full response details for debugging
+      console.log(`Upload response status: ${response.status}`);
+      const responseText = await response.text();
+      console.log(`Upload response body: ${responseText}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload image: ${response.status} ${response.statusText}`);
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log("Image upload response:", responseData);
+      } catch (e) {
+        console.log("Response is not JSON, using text response");
+      }
+
+      // Clear the image and text after successful upload
+      setSelectedImage(null);
+      setInputText("");
+
+      // Send text message separately if needed (server might expect it this way)
+      if (text.trim() && socketConnected && socketManager.isConnected()) {
+        socketManager.sendMessage(text);
+      }
+
+      const typingId = `typing-${Date.now()}`;
+      const typingMessage: ChatMessage = {
+        id: typingId,
+        text: "CarTechAI is analyzing your image...",
+        sender: "bot",
+      };
+      setMessages((prevMessages) => [...prevMessages, typingMessage]);
+
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+
+      messageTimeoutRef.current = setTimeout(() => {
+        setMessages((prevMessages) => {
+          const typingExists = prevMessages.some((msg) => msg.id === typingId);
+
+          if (typingExists) {
+            return prevMessages.map((msg) =>
+              msg.id === typingId
+                ? {
+                    ...msg,
+                    id: `error-${Date.now()}`,
+                    text: "Sorry, I didn't receive a response for your image. Please try again.",
+                  }
+                : msg,
+            );
+          }
+          return prevMessages;
+        });
+
+        socketManager.disconnect();
+        socketManager
+          .connect()
+          .then(() => {
+            if (chatId) {
+              socketManager.joinRoom(chatId);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to reconnect socket:", error);
+          });
+      }, 15000);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload image. Please try again.");
+    }
+  };
+
   useEffect(() => {
     Voice.onSpeechStart = onSpeechStart;
     Voice.onSpeechEnd = onSpeechEnd;
@@ -125,6 +287,8 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
+        // Add additional options for image compatibility
+        exif: false
       });
 
       if (!result.canceled) {
@@ -153,6 +317,8 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
+        // No special options needed as we'll handle the formats in prepareImageForUpload
+        exif: false
       });
 
       if (!result.canceled) {
@@ -161,151 +327,6 @@ const ChatScreen = () => {
     } catch (error) {
       console.error("Error picking image:", error);
       Alert.alert("Error", "Could not pick image. Please try again.");
-    }
-  };
-
-  const handleImageMessage = async (imageUri: string, text: string) => {
-    if (!chatId) {
-      console.error("Chat ID is missing. Cannot store messages.");
-      return;
-    }
-
-    // Show a local temporary preview of the image
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      text: imageUri, // Using the local URI for display
-      sender: "user",
-      type: "image",
-    };
-
-    setMessages((prevMessages) => [...prevMessages, tempMessage]);
-
-    // Show loading indicator
-    const loadingId = `loading-${Date.now()}`;
-    const loadingMessage: ChatMessage = {
-      id: loadingId,
-      text: "Uploading image...",
-      sender: "system",
-    };
-    setMessages((prevMessages) => [...prevMessages, loadingMessage]);
-
-    try {
-      const formData = new FormData();
-      const filename = imageUri.split("/").pop() || "image.jpg";
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : "image/jpeg";
-
-      // @ts-ignore
-      formData.append("file", {
-        uri: imageUri,
-        name: filename,
-        type,
-      });
-
-      const response = await fetch(`${API_URL}/upload/message/${chatId}`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      // Remove the loading message
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== loadingId),
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const responseData = await response.json();
-      console.log("Image upload response:", responseData);
-
-      // Replace temporary message with the actual one from the server if available
-      if (responseData.message && responseData.message.id) {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === tempId
-              ? {
-                  id: responseData.message.id,
-                  text: responseData.message.content,
-                  sender: "user",
-                  type: "image",
-                  timestamp: new Date(responseData.message.timestamp),
-                }
-              : msg,
-          ),
-        );
-      }
-
-      // If there's caption text, send it as a separate message
-      if (text.trim()) {
-        if (socketConnected && socketManager.isConnected()) {
-          socketManager.sendMessage(text);
-        }
-      }
-
-      const typingId = `typing-${Date.now()}`;
-      const typingMessage: ChatMessage = {
-        id: typingId,
-        text: "CarTechAI is analyzing your image...",
-        sender: "bot",
-      };
-      setMessages((prevMessages) => [...prevMessages, typingMessage]);
-
-      if (messageTimeoutRef.current) {
-        clearTimeout(messageTimeoutRef.current);
-      }
-
-      messageTimeoutRef.current = setTimeout(() => {
-        setMessages((prevMessages) => {
-          const typingExists = prevMessages.some((msg) => msg.id === typingId);
-
-          if (typingExists) {
-            return prevMessages.map((msg) =>
-              msg.id === typingId
-                ? {
-                    ...msg,
-                    id: `error-${Date.now()}`,
-                    text: "Sorry, I didn't receive a response for your image. Please try again.",
-                  }
-                : msg,
-            );
-          }
-          return prevMessages;
-        });
-
-        socketManager.disconnect();
-        socketManager
-          .connect()
-          .then(() => {
-            if (chatId) {
-              socketManager.joinRoom(chatId);
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to reconnect socket:", error);
-          });
-      }, 15000);
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      Alert.alert("Error", "Failed to upload image. Please try again.");
-
-      // Update the message to show upload failure
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === tempId
-            ? { ...msg, text: "Image upload failed", type: "error" }
-            : msg,
-        ),
-      );
-
-      // Remove the loading message
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== loadingId),
-      );
     }
   };
 
@@ -325,16 +346,6 @@ const ChatScreen = () => {
 
       const formattedMessages = apiMessages.map(
         (msg: ApiMessage): ChatMessage => {
-          // Ensure the type is one of the allowed values
-          const messageType =
-            msg.type === "image"
-              ? "image"
-              : msg.type === "error"
-                ? "error"
-                : msg.type === "system"
-                  ? "system"
-                  : "text";
-
           const message: ChatMessage = {
             id: msg.id,
             text: msg.content,
@@ -343,7 +354,7 @@ const ChatScreen = () => {
                 ? "bot"
                 : "user",
             timestamp: new Date(msg.timestamp),
-            type: messageType,
+            type: msg.type,
           };
 
           return message;
@@ -484,16 +495,11 @@ const ChatScreen = () => {
 
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
-    setSelectedImage(null);
 
     if (selectedImage) {
-      try {
-        await handleImageMessage(selectedImage, inputText);
-      } finally {
-        // Always clear the image and text input, even if upload fails
-        setSelectedImage(null);
-        setInputText("");
-      }
+      await handleImageMessage(selectedImage, inputText);
+      setSelectedImage(null);
+      setInputText("");
       return;
     }
 
@@ -903,8 +909,14 @@ const ChatScreen = () => {
             placeholderTextColor="#aaa"
           />
 
-          {selectedImage || inputText.trim() ? (
-            <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+          {!isRecording && (inputText.trim() || selectedImage) ? (
+            <TouchableOpacity
+              onPress={handleSend}
+              style={[
+                styles.sendButton,
+                selectedImage && styles.imageSelectedSendButton,
+              ]}
+            >
               <Icon name="send" size={24} color="#fff" />
             </TouchableOpacity>
           ) : (
@@ -1130,6 +1142,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 10,
     zIndex: 1,
+  },
+  imageSelectedSendButton: {
+    backgroundColor: "#95ff77",
+    borderRadius: 20,
   },
   recordingButton: {
     backgroundColor: "rgba(255, 68, 68, 0.2)",

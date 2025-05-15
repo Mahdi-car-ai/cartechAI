@@ -9,11 +9,12 @@ import {
   Linking,
 } from "react-native";
 import { RenderChatProps, ChatMessage } from "@/types/chat";
+import { API_URL } from "@/constants/Environment";
 
 const processTextWithMedia = (
   text: string | undefined,
   item: ChatMessage,
-  handleImageLoad: (id: string) => void
+  handleImageLoad: (id: string) => void,
 ) => {
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   const imagePattern =
@@ -86,6 +87,73 @@ const RenderChat = memo(
     );
 
     const imageLoading = loadingStates[item.id] ?? true;
+
+    // Handle system messages (like loading indicators)
+    if (item.sender === "system") {
+      return (
+        <View style={styles.systemMessageContainer}>
+          <Text style={styles.systemMessageText}>{item.text || item.message}</Text>
+        </View>
+      );
+    }
+
+    // Handle error messages
+    if (item.type === "error") {
+      return (
+        <View style={styles.errorMessageContainer}>
+          <Text style={styles.errorMessageText}>{item.text || item.message}</Text>
+        </View>
+      );
+    }
+
+    // Handle image type messages
+    if (item.type === "image") {
+      return (
+        <View
+          style={[
+            styles.messageContainer,
+            item.sender === "user" ? styles.userMessage : styles.botMessage,
+          ]}
+        >
+          <View style={styles.imageContainer}>
+            <TouchableOpacity
+              onPress={() =>
+                Linking.openURL(`${API_URL}/${item.text || item.message}`)
+              }
+            >
+              <View>
+                {imageLoading && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#00ff00"
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      zIndex: 1,
+                    }}
+                  />
+                )}
+                <Image
+                  source={{ 
+                    uri: item.text?.startsWith('http') || item.message?.startsWith('http') 
+                      ? (item.text || item.message) 
+                      : `${API_URL}/${item.text || item.message}` 
+                  }}
+                  style={styles.chatImage}
+                  onLoad={() => handleImageLoad(item.id)}
+                  onError={() => {
+                    console.log("Image failed to load:", item.text || item.message);
+                    handleImageLoad(item.id);
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View
         style={[
@@ -229,6 +297,32 @@ const styles = StyleSheet.create({
     fontFamily: "Aeonik",
     fontSize: 16,
     color: "#1a1c1b",
+  },
+  systemMessageContainer: {
+    padding: 8,
+    marginVertical: 5,
+    borderRadius: 16,
+    backgroundColor: "#2a2e2e",
+    alignSelf: "center",
+  },
+  systemMessageText: {
+    fontFamily: "Aeonik",
+    fontSize: 14,
+    color: "#eeeeee",
+    fontStyle: "italic",
+  },
+  errorMessageContainer: {
+    padding: 8,
+    marginVertical: 5,
+    borderRadius: 16,
+    backgroundColor: "#ff4444",
+    alignSelf: "center",
+  },
+  errorMessageText: {
+    fontFamily: "Aeonik",
+    fontSize: 14,
+    color: "#ffffff",
+    fontStyle: "italic",
   },
 });
 
