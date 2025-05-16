@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Base config for all connections -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Allow cleartext traffic to specific domains -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Local development IPs -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        
+        <!-- Your specific server IPs -->
+        <domain includeSubdomains="true">31.172.73.162</domain>
+        <domain includeSubdomains="true">192.168.3.195</domain>
+    </domain-config>
+</network-security-config> 
