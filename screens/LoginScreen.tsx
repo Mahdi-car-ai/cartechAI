@@ -106,14 +106,22 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
+      console.log(`Attempting to login with API URL: ${API_URL}`);
+      
       const response = await axios.post(`${API_URL}/auth/signin`, {
         email: email.trim(),
         password,
+      }, {
+        timeout: 15000, // 15 second timeout
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
       });
 
       const responseData = response.data as AuthTokens;
 
-      console.log(responseData.accessToken, "signin");
+      console.log("Login successful, received tokens");
 
       await AsyncStorage.setItem("accessToken", responseData.accessToken);
       await AsyncStorage.setItem("refreshToken", responseData.refreshToken);
@@ -122,17 +130,31 @@ export default function LoginScreen() {
 
       reloadApp();
     } catch (error: unknown) {
-      console.error(error);
-      console.log(error);
-      let errorMessage = "Login failed. Please try again." + error;
+      console.error("Login error details:", error);
+      
+      let errorMessage = "Login failed. Please try again.";
+      let errorDetails = "";
 
       const apiError = error as ApiError;
-      if (apiError.response?.data?.message) {
-        errorMessage = apiError.response.data.message;
+      if (apiError.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage = apiError.response.data?.message || "Server error";
+        errorDetails = `Status: ${apiError.response.status}`;
+        console.log("Error response:", apiError.response.data);
+      } else if (apiError.request) {
+        // The request was made but no response was received
+        errorMessage = "No response from server. Please check your network connection.";
+        errorDetails = "Network or server might be down";
+        console.log("No response received:", apiError.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        errorMessage = apiError.message || "Unknown error occurred";
+        console.log("Error message:", apiError.message);
       }
 
-      console.log(API_URL, "API_URL");
-      Alert.alert("Login Error");
+      console.log(`API URL used: ${API_URL}`);
+      Alert.alert("Login Error", `${errorMessage}\n${errorDetails}`);
     } finally {
       setLoading(false);
     }
@@ -140,16 +162,24 @@ export default function LoginScreen() {
 
   const fetchUserData = async (accessToken: string) => {
     try {
+      console.log(`Fetching user data from: ${API_URL}/auth/me`);
+      
       const response = await axios.get(`${API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        timeout: 10000, // 10 second timeout
       });
 
       const userData = response.data;
+      console.log("User data received successfully");
       await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
     } catch (error) {
       console.error("Error fetching user data:", error);
+      console.log("Creating basic profile due to fetch error");
+      
       const basicProfile = {
         firstName: "User",
         lastName: "",

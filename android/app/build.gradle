@@ -93,6 +93,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+        
+        // Required when setting minSdkVersion to 23 or later
+        multiDexEnabled true
     }
     signingConfigs {
         debug {
@@ -121,11 +124,46 @@ android {
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
         }
         resources {
-            excludes += ['/META-INF/{AL2.0,LGPL2.1}', 'META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.md', 'META-INF/LICENSE.txt', 'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt', 'META-INF/ASL2.0']
+            excludes += [
+                '/META-INF/{AL2.0,LGPL2.1}',
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.md',
+                'META-INF/LICENSE.txt',
+                'META-INF/license.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/notice.txt',
+                'META-INF/ASL2.0',
+                'META-INF/**.version',
+                'META-INF/services/**',
+                'META-INF/proguard/**',
+                'META-INF/**.properties',
+                'META-INF/androidx.**'
+            ]
+            pickFirsts += [
+                'META-INF/androidx.appcompat_appcompat.version',
+                'META-INF/androidx.core_core.version'
+            ]
         }
     }
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+    
+    // Add configurations to exclude problematic dependencies
+    configurations {
+        all {
+            exclude group: 'com.android.support', module: 'support-v4'
+            exclude group: 'com.android.support', module: 'support-media-compat'
+            exclude group: 'com.android.support', module: 'animated-vector-drawable'
+            exclude group: 'com.android.support', module: 'support-vector-drawable'
+            exclude group: 'com.android.support', module: 'support-compat'
+            exclude group: 'com.android.support', module: 'support-core-ui'
+            exclude group: 'com.android.support', module: 'support-core-utils'
+            exclude group: 'com.android.support', module: 'support-fragment'
+            exclude group: 'com.android.support', module: 'versionedparcelable'
+        }
     }
 }
 

@@ -30,7 +30,12 @@ export interface ApiError {
     data?: {
       message?: string;
     };
+    status?: number;
+    statusText?: string;
   };
+  request?: any;
+  message?: string;
+  config?: any;
 }
 
 export interface SignupData {
