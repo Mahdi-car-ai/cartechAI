@@ -22,7 +22,7 @@ const getApiUrl = () => {
   
   // If no API URL is found, use a default fallback
   if (!apiUrl) {
-    apiUrl = 'http://192.168.3.195:4000';
+    apiUrl = 'http://31.172.73.162:4000';
     console.log('Using fallback API URL:', apiUrl);
   }
   
