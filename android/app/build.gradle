@@ -151,18 +151,35 @@ android {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
     
-    // Add configurations to exclude problematic dependencies
-    configurations {
-        all {
-            exclude group: 'com.android.support', module: 'support-v4'
-            exclude group: 'com.android.support', module: 'support-media-compat'
-            exclude group: 'com.android.support', module: 'animated-vector-drawable'
-            exclude group: 'com.android.support', module: 'support-vector-drawable'
-            exclude group: 'com.android.support', module: 'support-compat'
-            exclude group: 'com.android.support', module: 'support-core-ui'
-            exclude group: 'com.android.support', module: 'support-core-utils'
-            exclude group: 'com.android.support', module: 'support-fragment'
-            exclude group: 'com.android.support', module: 'versionedparcelable'
+    configurations.all {
+        exclude group: 'com.android.support', module: 'support-v4'
+        exclude group: 'com.android.support', module: 'support-media-compat'
+        exclude group: 'com.android.support', module: 'animated-vector-drawable'
+        exclude group: 'com.android.support', module: 'support-vector-drawable'
+        exclude group: 'com.android.support', module: 'support-compat'
+        exclude group: 'com.android.support', module: 'support-core-ui'
+        exclude group: 'com.android.support', module: 'support-core-utils'
+        exclude group: 'com.android.support', module: 'support-fragment'
+        exclude group: 'com.android.support', module: 'versionedparcelable'
+        exclude group: 'androidx.versionedparcelable', module: 'versionedparcelable'
+        exclude group: 'com.android.support', module: 'support-annotations'
+        exclude group: 'android.arch.lifecycle', module: 'common'
+        exclude group: 'android.arch.lifecycle', module: 'runtime'
+        exclude group: 'android.arch.core', module: 'runtime'
+        exclude group: 'com.android.support', module: 'appcompat-v7'
+        exclude group: 'com.android.support', module: 'collections'
+        
+        resolutionStrategy {
+            force 'androidx.core:core:1.13.1'
+            force 'androidx.versionedparcelable:versionedparcelable:1.1.1'
+            force 'androidx.collection:collection:1.0.0'
+            force 'androidx.appcompat:appcompat:1.6.1'
+            
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'com.android.support') {
+                    details.useTarget("androidx.${details.requested.module}:${details.requested.module.replace('support-', '')}:1.0.0")
+                }
+            }
         }
     }
 }
@@ -214,4 +231,13 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
+    // Force specific androidx versions
+    implementation "androidx.core:core:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.collection:collection:1.0.0"
+    implementation "androidx.versionedparcelable:versionedparcelable:1.1.1"
+    
+    // Add multidex support
+    implementation "androidx.multidex:multidex:2.0.1"
 }

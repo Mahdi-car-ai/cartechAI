@@ -10,7 +10,7 @@ type CustomRequestConfig = any & {
 // Create a custom axios instance
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased timeout to 30 seconds for mobile networks
   headers: {
     "Content-Type": "application/json",
   },
@@ -55,6 +55,7 @@ const refreshToken = async (): Promise<string | null> => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${refreshToken}`,
         },
+        timeout: 30000, // Also increase timeout for token refresh
       },
     );
 
@@ -88,9 +89,13 @@ api.interceptors.request.use(
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error: any) => Promise.reject(error),
+  (error: any) => {
+    console.error('[API Request Error]', error);
+    return Promise.reject(error);
+  },
 );
 
 // Response interceptor to handle token refresh
@@ -98,6 +103,14 @@ api.interceptors.response.use(
   (response: any) => response,
   async (error: any) => {
     const originalRequest = error.config as CustomRequestConfig;
+
+    // Log detailed error info for debugging
+    console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      code: error.code,
+    });
 
     // If error is 401 and we haven't tried to refresh the token yet
     if (error.response?.status === 401 && !originalRequest._retry) {

@@ -1,5 +1,6 @@
 import api from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 interface LoginCredentials {
   email: string;
@@ -16,7 +17,16 @@ interface AuthResponse {
   };
 }
 
-export const login = async (credentials: LoginCredentials): Promise<boolean> => {
+interface LoginResult {
+  success: boolean;
+  error?: {
+    message: string;
+    code?: string;
+    isNetworkError?: boolean;
+  };
+}
+
+export const login = async (credentials: LoginCredentials): Promise<LoginResult> => {
   try {
     const response = await api.post<AuthResponse>('/auth/login', credentials);
     
@@ -27,10 +37,56 @@ export const login = async (credentials: LoginCredentials): Promise<boolean> => 
     await AsyncStorage.setItem('refreshToken', refreshToken);
     await AsyncStorage.setItem('userProfile', JSON.stringify(user));
     
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error('Login error:', error);
-    return false;
+
+    // Provide detailed error information
+    if (error && error.isAxiosError) {
+      if (error.code === 'ECONNABORTED') {
+        return {
+          success: false,
+          error: {
+            message: 'Connection timeout. Server is taking too long to respond.',
+            code: 'TIMEOUT',
+            isNetworkError: true
+          }
+        };
+      }
+      
+      if (!error.response) {
+        return {
+          success: false,
+          error: {
+            message: 'No response from server. Please check your network connection.',
+            code: 'NO_RESPONSE',
+            isNetworkError: true
+          }
+        };
+      }
+
+      // Server returned an error response
+      const statusCode = error.response.status;
+      const errorData = error.response.data;
+      const errorMessage = errorData?.message || 'An unknown error occurred';
+      
+      return {
+        success: false,
+        error: {
+          message: errorMessage,
+          code: `HTTP_${statusCode}`
+        }
+      };
+    }
+    
+    // Generic error handling
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'An unknown error occurred',
+        code: 'UNKNOWN_ERROR'
+      }
+    };
   }
 };
 
