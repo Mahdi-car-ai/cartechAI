@@ -12,13 +12,13 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import Logo from "../../components/ui/Logo";
-import CustomButton from "../../components/Button/Button";
+import Logo from "../components/ui/Logo";
+import CustomButton from "../components/Button/Button";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { ApiError, UserProfile } from "../../types/auth";
+import { ApiError, UserProfile } from "../types/auth";
 import { FontAwesome } from "@expo/vector-icons";
-import { styles } from "./UserScreen";
+import { styles } from "./UserScreenStyles";
 
 // Add the type declaration for the global var
 declare global {
@@ -123,7 +123,7 @@ export default function UserScreen() {
             />
           ) : (
             <Image
-              source={require("../../assets/images/icons/user.png")}
+              source={require("../assets/images/icons/user.png")}
               style={styles.profileImage}
             />
           )}

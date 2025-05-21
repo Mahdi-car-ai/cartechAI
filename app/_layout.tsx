@@ -21,7 +21,7 @@ import CustomDrawer from "@/components/CustomDrawer/CustomDrawer";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 import CommunityScreen from "@/screens/CommunityScreen/CommunityScreen";
-import UserScreen from "../screens/UserScreen/UserScreen";
+import UserScreen from "@/screens/UserScreen";
 import CreatePostScreen from "@/screens/CreatePostScreen";
 import PostDetailsScreen from "@/screens/PostDetailsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
