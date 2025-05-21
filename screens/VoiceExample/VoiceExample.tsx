@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { VoiceRecognition } from '../components/VoiceRecognition';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import { VoiceRecognition } from "../../components/VoiceRecognition";
 
 export default function VoiceExample() {
-  const [recognizedText, setRecognizedText] = useState<string>('');
+  const [recognizedText, setRecognizedText] = useState<string>("");
 
   const handleSpeechResults = (results: string[]) => {
     // Use the most confident result (first one)
@@ -16,13 +16,14 @@ export default function VoiceExample() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Voice Recognition Example</Text>
-        
+
         <View style={styles.card}>
           <Text style={styles.instructions}>
-            Tap the button below and speak. Your speech will be converted to text.
+            Tap the button below and speak. Your speech will be converted to
+            text.
           </Text>
-          
-          <VoiceRecognition 
+
+          <VoiceRecognition
             onSpeechResults={handleSpeechResults}
             language="en-US" // Change to your preferred language, e.g., "uk-UA" for Ukrainian
           />
@@ -42,23 +43,23 @@ export default function VoiceExample() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   scrollContainer: {
     padding: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -67,14 +68,14 @@ const styles = StyleSheet.create({
   instructions: {
     fontSize: 16,
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#555',
+    textAlign: "center",
+    color: "#555",
   },
   resultCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -82,12 +83,12 @@ const styles = StyleSheet.create({
   },
   resultTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
   },
   recognizedText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#333',
+    color: "#333",
   },
-}); 
+});

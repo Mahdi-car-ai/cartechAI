@@ -105,7 +105,7 @@ const PostDetailsScreen = () => {
             console.log("Removing typing indicators - bot message received");
             setMessages((prevMessages) => {
               const updatedMessages = prevMessages.filter(
-                (msg) => !msg.id.startsWith("typing"),
+                (msg) => !msg.id.startsWith("typing")
               );
 
               const removedCount = prevMessages.length - updatedMessages.length;
@@ -127,13 +127,14 @@ const PostDetailsScreen = () => {
                   ((isBot &&
                     msg.senderId === "00000000-0000-0000-0000-000000000000") ||
                     (!isBot &&
-                      msg.senderId !==
-                        "00000000-0000-0000-0000-000000000000"))),
+                      msg.senderId !== "00000000-0000-0000-0000-000000000000")))
             );
 
             if (!messageExists) {
               console.log(
-                `Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`,
+                `Adding message to UI: ${messageData.content} from ${
+                  isBot ? "bot" : "user"
+                }`
               );
               return [
                 ...prevMessages,
@@ -146,7 +147,7 @@ const PostDetailsScreen = () => {
               ];
             } else {
               console.log(
-                `Message already exists in UI: ${messageData.content}`,
+                `Message already exists in UI: ${messageData.content}`
               );
             }
             return prevMessages;
@@ -163,7 +164,7 @@ const PostDetailsScreen = () => {
         }
 
         setMessages((prevMessages) =>
-          prevMessages.filter((msg) => !msg.id.startsWith("typing")),
+          prevMessages.filter((msg) => !msg.id.startsWith("typing"))
         );
 
         socketManager.joinRoom(chatId);
@@ -233,7 +234,7 @@ const PostDetailsScreen = () => {
           senderId: msg.senderId,
           timestamp: msg.timestamp,
           votes: 0,
-        }),
+        })
       );
 
       if (pageNum === 1) {
@@ -271,7 +272,7 @@ const PostDetailsScreen = () => {
     try {
       if (!socketManager.isConnected()) {
         console.log(
-          "Socket not connected. Reconnecting before sending message...",
+          "Socket not connected. Reconnecting before sending message..."
         );
         await socketManager.connect();
         socketManager.joinRoom(chatId);
@@ -313,12 +314,12 @@ const PostDetailsScreen = () => {
           console.log(`Checking timeout for message: "${responseText}"`);
           setMessages((prevMessages) => {
             const typingExists = prevMessages.some(
-              (msg) => msg.id === typingId,
+              (msg) => msg.id === typingId
             );
 
             if (typingExists) {
               console.log(
-                "No response received within timeout period, showing error message",
+                "No response received within timeout period, showing error message"
               );
               return prevMessages.map((msg) =>
                 msg.id === typingId
@@ -328,7 +329,7 @@ const PostDetailsScreen = () => {
                       content:
                         "Sorry, I didn't receive a response from the server. Please try again.",
                     }
-                  : msg,
+                  : msg
               );
             }
             return prevMessages;
@@ -352,7 +353,7 @@ const PostDetailsScreen = () => {
       } else {
         Alert.alert(
           "Connection Error",
-          "Failed to send message. Please check your connection and try again.",
+          "Failed to send message. Please check your connection and try again."
         );
       }
     } catch (error) {

@@ -57,16 +57,18 @@ const ChatScreen = () => {
   /**
    * Prepare image for upload, handling different formats
    */
-  const prepareImageForUpload = (uri: string): { uri: string; type: string; name: string } => {
+  const prepareImageForUpload = (
+    uri: string
+  ): { uri: string; type: string; name: string } => {
     // Convert file extension to lowercase for easier checking
     const lowercaseUri = uri.toLowerCase();
-    
+
     // Extract filename from URI
     let filename = uri.split("/").pop() || "image.jpg";
-    
+
     // Determine type based on extension
     let mimeType = "image/jpeg"; // Default mime type
-    
+
     // Check for known image formats
     if (lowercaseUri.endsWith(".png")) {
       mimeType = "image/png";
@@ -74,21 +76,24 @@ const ChatScreen = () => {
       mimeType = "image/gif";
     } else if (lowercaseUri.endsWith(".webp")) {
       mimeType = "image/webp";
-    } else if (lowercaseUri.endsWith(".heic") || lowercaseUri.endsWith(".heif")) {
-      // For HEIC images, we'll force the extension to be .jpg since 
+    } else if (
+      lowercaseUri.endsWith(".heic") ||
+      lowercaseUri.endsWith(".heif")
+    ) {
+      // For HEIC images, we'll force the extension to be .jpg since
       // most servers can't handle HEIC files directly
       mimeType = "image/jpeg";
       filename = filename.replace(/\.heic|\.heif/i, ".jpg");
     }
-    
+
     // Log what we're doing with the image
     console.log(`Preparing image: ${uri}`);
     console.log(`Filename: ${filename}, Type: ${mimeType}`);
-    
+
     return {
       uri,
       name: filename,
-      type: mimeType
+      type: mimeType,
     };
   };
 
@@ -101,13 +106,15 @@ const ChatScreen = () => {
     try {
       // Prepare the image for upload
       const imageFile = prepareImageForUpload(imageUri);
-      
+
       // Create form data - make sure we're using the right field name expected by the server
       const formData = new FormData();
-      
+
       console.log(`Creating form data with image: ${imageFile.uri}`);
-      console.log(`Field name: file, filename: ${imageFile.name}, type: ${imageFile.type}`);
-      
+      console.log(
+        `Field name: file, filename: ${imageFile.name}, type: ${imageFile.type}`
+      );
+
       // @ts-ignore - FormData expects a Blob but React Native uses objects
       formData.append("file", {
         uri: imageFile.uri,
@@ -131,14 +138,14 @@ const ChatScreen = () => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
 
       console.log(`Uploading image to: ${API_URL}/upload/message/${chatId}`);
-      
+
       // Make the API request
       const response = await fetch(`${API_URL}/upload/message/${chatId}`, {
         method: "POST",
         body: formData,
         headers: {
           "Content-Type": "multipart/form-data",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -148,7 +155,9 @@ const ChatScreen = () => {
       console.log(`Upload response body: ${responseText}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to upload image: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to upload image: ${response.status} ${response.statusText}`
+        );
       }
 
       let responseData;
@@ -192,7 +201,7 @@ const ChatScreen = () => {
                     id: `error-${Date.now()}`,
                     text: "Sorry, I didn't receive a response for your image. Please try again.",
                   }
-                : msg,
+                : msg
             );
           }
           return prevMessages;
@@ -256,7 +265,7 @@ const ChatScreen = () => {
       console.error("Error starting voice recognition:", e);
       Alert.alert(
         "Error",
-        "Could not start voice recording. Please try again.",
+        "Could not start voice recording. Please try again."
       );
     }
   };
@@ -277,7 +286,7 @@ const ChatScreen = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos.",
+        "Camera permission is required to take photos."
       );
       return;
     }
@@ -288,7 +297,7 @@ const ChatScreen = () => {
         quality: 0.8,
         allowsEditing: true,
         // Add additional options for image compatibility
-        exif: false
+        exif: false,
       });
 
       if (!result.canceled) {
@@ -307,7 +316,7 @@ const ChatScreen = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Media library permission is required to select images.",
+        "Media library permission is required to select images."
       );
       return;
     }
@@ -318,7 +327,7 @@ const ChatScreen = () => {
         quality: 0.8,
         allowsEditing: true,
         // No special options needed as we'll handle the formats in prepareImageForUpload
-        exif: false
+        exif: false,
       });
 
       if (!result.canceled) {
@@ -354,13 +363,17 @@ const ChatScreen = () => {
                 ? "bot"
                 : "user",
             timestamp: new Date(msg.timestamp),
-            type: (msg.type === "text" || msg.type === "image" || msg.type === "error" || msg.type === "system") 
-              ? msg.type 
-              : "text", // Default to "text" if type is not one of the allowed values
+            type:
+              msg.type === "text" ||
+              msg.type === "image" ||
+              msg.type === "error" ||
+              msg.type === "system"
+                ? msg.type
+                : "text", // Default to "text" if type is not one of the allowed values
           };
 
           return message;
-        },
+        }
       );
 
       if (page === 1) {
@@ -376,7 +389,7 @@ const ChatScreen = () => {
       console.error("Error fetching messages:", error);
       Alert.alert("Error", "Failed to fetch messages. Please try again.");
     } finally {
-      setIsLoadingMessages(false);
+      setIsLoadingMessages(true);
     }
   };
 
@@ -392,7 +405,7 @@ const ChatScreen = () => {
       try {
         if (!socketManager.isConnected()) {
           console.log(
-            "Socket not connected during initChat, connecting first...",
+            "Socket not connected during initChat, connecting first..."
           );
           await socketManager.connect();
           await new Promise((resolve) => setTimeout(resolve, 300));
@@ -415,7 +428,7 @@ const ChatScreen = () => {
             }, 500);
           } else {
             console.error(
-              "Socket not connected after connect attempt, cannot join new chat room",
+              "Socket not connected after connect attempt, cannot join new chat room"
             );
             try {
               console.log("Trying one more connect attempt for new chat");
@@ -439,14 +452,14 @@ const ChatScreen = () => {
 
           if (socketManager.isConnected()) {
             console.log(
-              `Socket is connected, joining existing room: ${existingChatId}`,
+              `Socket is connected, joining existing room: ${existingChatId}`
             );
             setTimeout(() => {
               socketManager.joinRoom(existingChatId);
             }, 500);
           } else {
             console.log(
-              "Socket not connected, will join room when socket connects",
+              "Socket not connected, will join room when socket connects"
             );
           }
         }
@@ -463,14 +476,14 @@ const ChatScreen = () => {
   useEffect(() => {
     if (socketConnected && chatId) {
       console.log(
-        `Socket is now connected. Ensuring we are in room: ${chatId}`,
+        `Socket is now connected. Ensuring we are in room: ${chatId}`
       );
       socketManager.joinRoom(chatId);
     }
   }, [socketConnected, chatId]);
 
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
-    {},
+    {}
   );
 
   const scrollToBottom = () => {
@@ -507,7 +520,7 @@ const ChatScreen = () => {
 
     if (!socketManager.isConnected()) {
       console.log(
-        "Socket not connected. Reconnecting before sending message...",
+        "Socket not connected. Reconnecting before sending message..."
       );
       try {
         await socketManager.connect();
@@ -519,7 +532,7 @@ const ChatScreen = () => {
         console.error("Failed to reconnect socket before sending:", error);
         Alert.alert(
           "Connection Error",
-          "Cannot connect to chat server. Please try again later.",
+          "Cannot connect to chat server. Please try again later."
         );
         return;
       }
@@ -565,7 +578,7 @@ const ChatScreen = () => {
 
           if (typingExists) {
             console.log(
-              "No response received within timeout period, showing error message",
+              "No response received within timeout period, showing error message"
             );
             return prevMessages.map((msg) =>
               msg.id === typingId
@@ -574,7 +587,7 @@ const ChatScreen = () => {
                     id: `error-${Date.now()}`,
                     text: "Sorry, I didn't receive a response from the server. Please try again.",
                   }
-                : msg,
+                : msg
             );
           }
           return prevMessages;
@@ -600,7 +613,7 @@ const ChatScreen = () => {
     } else {
       Alert.alert(
         "Connection Error",
-        "Failed to send message. Please check your connection and try again.",
+        "Failed to send message. Please check your connection and try again."
       );
     }
   };
@@ -623,7 +636,7 @@ const ChatScreen = () => {
   useEffect(() => {
     if (socketConnected) {
       console.log(
-        "Socket connected/reconnected - clearing any pending timeouts",
+        "Socket connected/reconnected - clearing any pending timeouts"
       );
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
@@ -632,12 +645,12 @@ const ChatScreen = () => {
 
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
-          (msg) => !msg.id.startsWith("typing"),
+          (msg) => !msg.id.startsWith("typing")
         );
         const removedCount = prevMessages.length - updatedMessages.length;
         if (removedCount > 0) {
           console.log(
-            `Removed ${removedCount} stale typing indicators after reconnect`,
+            `Removed ${removedCount} stale typing indicators after reconnect`
           );
         }
         return updatedMessages;
@@ -677,11 +690,11 @@ const ChatScreen = () => {
 
               if (isBot) {
                 console.log(
-                  "Removing typing indicators - bot message received",
+                  "Removing typing indicators - bot message received"
                 );
                 setMessages((prevMessages) => {
                   const updatedMessages = prevMessages.filter(
-                    (msg) => !msg.id.startsWith("typing"),
+                    (msg) => !msg.id.startsWith("typing")
                   );
 
                   const removedCount =
@@ -701,12 +714,14 @@ const ChatScreen = () => {
                   (msg) =>
                     (msg.id && msg.id === messageData.id) ||
                     (msg.text === messageData.content &&
-                      msg.sender === (isBot ? "bot" : "user")),
+                      msg.sender === (isBot ? "bot" : "user"))
                 );
 
                 if (!messageExists) {
                   console.log(
-                    `Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`,
+                    `Adding message to UI: ${messageData.content} from ${
+                      isBot ? "bot" : "user"
+                    }`
                   );
                   return [
                     ...prevMessages,
@@ -721,7 +736,7 @@ const ChatScreen = () => {
                   ];
                 } else {
                   console.log(
-                    `Message already exists in UI: ${messageData.content}`,
+                    `Message already exists in UI: ${messageData.content}`
                   );
                 }
                 return prevMessages;
@@ -733,7 +748,7 @@ const ChatScreen = () => {
         console.error("Error connecting to socket:", error);
         Alert.alert(
           "Connection Error",
-          "Failed to connect to chat server. Some features may not work properly.",
+          "Failed to connect to chat server. Some features may not work properly."
         );
       }
     };
@@ -746,7 +761,7 @@ const ChatScreen = () => {
       }
 
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => !msg.id.startsWith("typing")),
+        prevMessages.filter((msg) => !msg.id.startsWith("typing"))
       );
 
       if (chatId) {

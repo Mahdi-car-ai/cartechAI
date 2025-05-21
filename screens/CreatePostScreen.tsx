@@ -60,7 +60,7 @@ const CreatePostScreen = () => {
           <Logo />
         </View>
       </View>
-     
+
       {/* Input Fields */}
       <TextInput
         style={styles.input}
@@ -79,12 +79,23 @@ const CreatePostScreen = () => {
       />
 
       {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={handlePostCreation} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Create</Text>}
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handlePostCreation}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Create</Text>
+        )}
       </TouchableOpacity>
 
       {/* Cancel Button */}
-      <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.navigate("CommunityScreen")}>
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={() => navigation.navigate("CommunityScreen")}
+      >
         <Text style={styles.cancelButtonText}>Cancel</Text>
       </TouchableOpacity>
     </View>
@@ -123,7 +134,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: "#95ff77",
     paddingVertical: 14,
-  
+
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
@@ -135,7 +146,7 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: "#2a2e2e",
-    
+
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",

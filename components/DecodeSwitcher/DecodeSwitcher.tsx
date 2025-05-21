@@ -1,7 +1,7 @@
 import React, { FC, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import VinSubmission from "./vinSubmission/VinSubmission";
-import PlateSubmission from "./plateSubmission/PlateSubmission";
+import VinSubmission from "../vinSubmission/VinSubmission";
+import PlateSubmission from "../plateSubmission/PlateSubmission";
 
 type LookupType = "vin" | "plate";
 
@@ -65,13 +65,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabContainer: {
+    height: 53,
     padding: 8,
     flexDirection: "row",
-    width: "90%",
+    width: "100%",
     marginBottom: 16,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#2a2e2e",
+    backgroundColor: "#17171B",
   },
   tabButton: {
     flex: 1,
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   activeTabButton: {
-    backgroundColor: "#3f4342",
+    backgroundColor: "#292929",
   },
   tabText: {
     color: "#aaa",

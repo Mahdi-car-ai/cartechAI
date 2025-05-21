@@ -26,6 +26,7 @@ import { getChatMessages, Message as ApiMessage } from "@/utils/Chat";
 import { ChatMessage } from "@/types/chat";
 import { API_URL } from "@/constants/Environment";
 import api from "@/services/api";
+import { styles } from "./ChatScreenStyles";
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -104,7 +105,7 @@ const ChatScreen = () => {
       console.error("Error starting voice recognition:", e);
       Alert.alert(
         "Error",
-        "Could not start voice recording. Please try again.",
+        "Could not start voice recording. Please try again."
       );
     }
   };
@@ -125,7 +126,7 @@ const ChatScreen = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos.",
+        "Camera permission is required to take photos."
       );
       return;
     }
@@ -135,7 +136,7 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
-        exif: false
+        exif: false,
       });
 
       if (!result.canceled) {
@@ -154,7 +155,7 @@ const ChatScreen = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Media library permission is required to select images.",
+        "Media library permission is required to select images."
       );
       return;
     }
@@ -164,7 +165,7 @@ const ChatScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.8,
         allowsEditing: true,
-        exif: false
+        exif: false,
       });
 
       if (!result.canceled) {
@@ -207,12 +208,12 @@ const ChatScreen = () => {
       const filename = imageUri.split("/").pop() || "image.jpg";
       const match = /\.(\w+)$/.exec(filename.toLowerCase());
       const type = match ? `image/${match[1]}` : "image/jpeg";
-      
+
       console.log(`Preparing image: ${imageUri}`);
       console.log(`Filename: ${filename}, Type: ${type}`);
-      
+
       const formData = new FormData();
-      
+
       // @ts-ignore - FormData expects a Blob but React Native uses objects
       formData.append("file", {
         uri: imageUri,
@@ -227,7 +228,7 @@ const ChatScreen = () => {
       }
 
       console.log(`Uploading image to: ${API_URL}/upload/message/${chatId}`);
-      
+
       // Use api service to upload image
       const response = await api.post<ImageUploadResponse>(
         `/upload/message/${chatId}`,
@@ -235,21 +236,21 @@ const ChatScreen = () => {
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "Accept": "application/json",
+            Accept: "application/json",
           },
         }
       );
 
       // Remove the loading message
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== loadingId),
+        prevMessages.filter((msg) => msg.id !== loadingId)
       );
 
       console.log("Image upload response status:", response.status);
       console.log("Image upload response:", response.data);
 
       // Replace temporary message with the actual one from the server if available
-      if (response.data?.message && typeof response.data.message === 'object') {
+      if (response.data?.message && typeof response.data.message === "object") {
         const messageData = response.data.message;
         setMessages((prevMessages) =>
           prevMessages.map((msg) =>
@@ -259,10 +260,12 @@ const ChatScreen = () => {
                   text: messageData.content || "Image",
                   sender: "user",
                   type: "image",
-                  timestamp: messageData.timestamp ? new Date(messageData.timestamp) : new Date(),
+                  timestamp: messageData.timestamp
+                    ? new Date(messageData.timestamp)
+                    : new Date(),
                 }
-              : msg,
-          ),
+              : msg
+          )
         );
       }
 
@@ -297,7 +300,7 @@ const ChatScreen = () => {
                     id: `error-${Date.now()}`,
                     text: "Sorry, I didn't receive a response for your image. Please try again.",
                   }
-                : msg,
+                : msg
             );
           }
           return prevMessages;
@@ -324,13 +327,13 @@ const ChatScreen = () => {
         prevMessages.map((msg) =>
           msg.id === tempId
             ? { ...msg, text: "Image upload failed", type: "error" }
-            : msg,
-        ),
+            : msg
+        )
       );
 
       // Remove the loading message
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== loadingId),
+        prevMessages.filter((msg) => msg.id !== loadingId)
       );
     }
   };
@@ -356,10 +359,10 @@ const ChatScreen = () => {
             msg.type === "image"
               ? "image"
               : msg.type === "error"
-                ? "error"
-                : msg.type === "system"
-                  ? "system"
-                  : "text";
+              ? "error"
+              : msg.type === "system"
+              ? "system"
+              : "text";
 
           const message: ChatMessage = {
             id: msg.id,
@@ -373,7 +376,7 @@ const ChatScreen = () => {
           };
 
           return message;
-        },
+        }
       );
 
       if (page === 1) {
@@ -405,7 +408,7 @@ const ChatScreen = () => {
       try {
         if (!socketManager.isConnected()) {
           console.log(
-            "Socket not connected during initChat, connecting first...",
+            "Socket not connected during initChat, connecting first..."
           );
           await socketManager.connect();
           await new Promise((resolve) => setTimeout(resolve, 300));
@@ -428,7 +431,7 @@ const ChatScreen = () => {
             }, 500);
           } else {
             console.error(
-              "Socket not connected after connect attempt, cannot join new chat room",
+              "Socket not connected after connect attempt, cannot join new chat room"
             );
             try {
               console.log("Trying one more connect attempt for new chat");
@@ -452,14 +455,14 @@ const ChatScreen = () => {
 
           if (socketManager.isConnected()) {
             console.log(
-              `Socket is connected, joining existing room: ${existingChatId}`,
+              `Socket is connected, joining existing room: ${existingChatId}`
             );
             setTimeout(() => {
               socketManager.joinRoom(existingChatId);
             }, 500);
           } else {
             console.log(
-              "Socket not connected, will join room when socket connects",
+              "Socket not connected, will join room when socket connects"
             );
           }
         }
@@ -476,14 +479,14 @@ const ChatScreen = () => {
   useEffect(() => {
     if (socketConnected && chatId) {
       console.log(
-        `Socket is now connected. Ensuring we are in room: ${chatId}`,
+        `Socket is now connected. Ensuring we are in room: ${chatId}`
       );
       socketManager.joinRoom(chatId);
     }
   }, [socketConnected, chatId]);
 
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
-    {},
+    {}
   );
 
   const scrollToBottom = () => {
@@ -525,7 +528,7 @@ const ChatScreen = () => {
 
     if (!socketManager.isConnected()) {
       console.log(
-        "Socket not connected. Reconnecting before sending message...",
+        "Socket not connected. Reconnecting before sending message..."
       );
       try {
         await socketManager.connect();
@@ -537,7 +540,7 @@ const ChatScreen = () => {
         console.error("Failed to reconnect socket before sending:", error);
         Alert.alert(
           "Connection Error",
-          "Cannot connect to chat server. Please try again later.",
+          "Cannot connect to chat server. Please try again later."
         );
         return;
       }
@@ -583,7 +586,7 @@ const ChatScreen = () => {
 
           if (typingExists) {
             console.log(
-              "No response received within timeout period, showing error message",
+              "No response received within timeout period, showing error message"
             );
             return prevMessages.map((msg) =>
               msg.id === typingId
@@ -592,7 +595,7 @@ const ChatScreen = () => {
                     id: `error-${Date.now()}`,
                     text: "Sorry, I didn't receive a response from the server. Please try again.",
                   }
-                : msg,
+                : msg
             );
           }
           return prevMessages;
@@ -618,7 +621,7 @@ const ChatScreen = () => {
     } else {
       Alert.alert(
         "Connection Error",
-        "Failed to send message. Please check your connection and try again.",
+        "Failed to send message. Please check your connection and try again."
       );
     }
   };
@@ -641,7 +644,7 @@ const ChatScreen = () => {
   useEffect(() => {
     if (socketConnected) {
       console.log(
-        "Socket connected/reconnected - clearing any pending timeouts",
+        "Socket connected/reconnected - clearing any pending timeouts"
       );
       if (messageTimeoutRef.current) {
         clearTimeout(messageTimeoutRef.current);
@@ -650,12 +653,12 @@ const ChatScreen = () => {
 
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
-          (msg) => !msg.id.startsWith("typing"),
+          (msg) => !msg.id.startsWith("typing")
         );
         const removedCount = prevMessages.length - updatedMessages.length;
         if (removedCount > 0) {
           console.log(
-            `Removed ${removedCount} stale typing indicators after reconnect`,
+            `Removed ${removedCount} stale typing indicators after reconnect`
           );
         }
         return updatedMessages;
@@ -695,11 +698,11 @@ const ChatScreen = () => {
 
               if (isBot) {
                 console.log(
-                  "Removing typing indicators - bot message received",
+                  "Removing typing indicators - bot message received"
                 );
                 setMessages((prevMessages) => {
                   const updatedMessages = prevMessages.filter(
-                    (msg) => !msg.id.startsWith("typing"),
+                    (msg) => !msg.id.startsWith("typing")
                   );
 
                   const removedCount =
@@ -719,12 +722,14 @@ const ChatScreen = () => {
                   (msg) =>
                     (msg.id && msg.id === messageData.id) ||
                     (msg.text === messageData.content &&
-                      msg.sender === (isBot ? "bot" : "user")),
+                      msg.sender === (isBot ? "bot" : "user"))
                 );
 
                 if (!messageExists) {
                   console.log(
-                    `Adding message to UI: ${messageData.content} from ${isBot ? "bot" : "user"}`,
+                    `Adding message to UI: ${messageData.content} from ${
+                      isBot ? "bot" : "user"
+                    }`
                   );
                   return [
                     ...prevMessages,
@@ -739,7 +744,7 @@ const ChatScreen = () => {
                   ];
                 } else {
                   console.log(
-                    `Message already exists in UI: ${messageData.content}`,
+                    `Message already exists in UI: ${messageData.content}`
                   );
                 }
                 return prevMessages;
@@ -751,7 +756,7 @@ const ChatScreen = () => {
         console.error("Error connecting to socket:", error);
         Alert.alert(
           "Connection Error",
-          "Failed to connect to chat server. Some features may not work properly.",
+          "Failed to connect to chat server. Some features may not work properly."
         );
       }
     };
@@ -764,7 +769,7 @@ const ChatScreen = () => {
       }
 
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => !msg.id.startsWith("typing")),
+        prevMessages.filter((msg) => !msg.id.startsWith("typing"))
       );
 
       if (chatId) {
@@ -985,264 +990,5 @@ const ChatScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  chatImage: {
-    width: "100%",
-    maxWidth: 300,
-    height: undefined,
-    aspectRatio: 16 / 9,
-    borderRadius: 8,
-    marginTop: 5,
-    alignSelf: "flex-start",
-    resizeMode: "cover",
-  },
-
-  logo: {
-    flex: 1,
-    alignItems: "center",
-    paddingLeft: 16,
-  },
-
-  animation: {
-    width: 50,
-    height: 50,
-  },
-  youtubeContainer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    marginVertical: 5,
-  },
-  youtubeThumbnailContainer: {
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  youtubeThumbnail: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-    borderRadius: 8,
-    marginTop: 5,
-    resizeMode: "cover",
-  },
-  youtubePlayButton: {
-    position: "absolute",
-    top: "48%",
-    left: "45%",
-    transform: [{ translateX: -15 }, { translateY: -15 }],
-    backgroundColor: "#FF0000",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playButtonText: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  container: {
-    flex: 1,
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: "#1a1c1b",
-    alignItems: "center",
-  },
-  title: {
-    fontFamily: "Aeonik",
-    fontSize: 20,
-    color: "#fff",
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  chatBox: {
-    flexGrow: 1,
-    width: "100%",
-  },
-  messageContainer: {
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 16,
-  },
-  userMessage: {
-    fontFamily: "Aeonik",
-    alignSelf: "flex-end",
-    backgroundColor: "#fff",
-  },
-  botMessage: {
-    fontFamily: "Aeonik",
-    alignSelf: "flex-start",
-    backgroundColor: "#95ff77",
-  },
-  messageText: {
-    fontFamily: "Aeonik",
-    fontSize: 16,
-    color: "#1a1c1b",
-  },
-  boldText: {
-    fontFamily: "Aeonik",
-    fontSize: 16,
-  },
-  imageContainer: {
-    flexWrap: "wrap",
-  },
-  typingText: {
-    fontFamily: "Aeonik",
-    fontSize: 16,
-    color: "#2a2e2e",
-    fontStyle: "italic",
-  },
-  typingContainer: {
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 16,
-    backgroundColor: "#95ff77",
-    maxWidth: "80%",
-  },
-  linkContainer: {
-    marginVertical: 5,
-  },
-  link: {
-    zIndex: 100,
-    fontFamily: "Aeonik",
-    fontSize: 16,
-    color: "#0066cc",
-    textDecorationLine: "underline",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 60,
-    borderColor: "#444",
-    marginBottom: 5,
-    marginTop: 10,
-    width: "100%",
-    position: "relative",
-  },
-  input: {
-    flex: 1,
-    padding: 15,
-    paddingLeft: 50,
-    paddingRight: 50,
-    borderWidth: 1,
-    height: 60,
-    borderColor: "#555",
-    borderRadius: 16,
-    color: "#fff",
-    backgroundColor: "#1a1c1b",
-    fontFamily: "Aeonik",
-    fontSize: 16,
-  },
-  inputWithImage: {
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  attachButton: {
-    padding: 12,
-    position: "absolute",
-    left: 10,
-    zIndex: 1,
-  },
-  sendButton: {
-    padding: 12,
-    position: "absolute",
-    right: 10,
-    zIndex: 1,
-  },
-  recordingButton: {
-    backgroundColor: "rgba(255, 68, 68, 0.2)",
-    borderRadius: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#2a2e2e",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-  },
-  modalOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#444",
-  },
-  modalOptionText: {
-    color: "#fff",
-    fontSize: 16,
-    marginLeft: 16,
-    fontFamily: "Aeonik",
-  },
-  cancelOption: {
-    justifyContent: "center",
-    borderBottomWidth: 0,
-    marginTop: 10,
-  },
-  cancelText: {
-    color: "#FF4444",
-    textAlign: "center",
-    fontSize: 16,
-    marginLeft: 0,
-  },
-  selectedImageContainer: {
-    width: "100%",
-    backgroundColor: "#333",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    position: "relative",
-  },
-  selectedImagePreview: {
-    height: 100,
-    width: "100%",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    resizeMode: "contain",
-  },
-  removeImageButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadMoreButton: {
-    flexDirection: "row",
-    backgroundColor: "#2a2e2e",
-    padding: 10,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 10,
-    alignSelf: "center",
-  },
-  loadMoreButtonLoading: {
-    backgroundColor: "#444",
-    opacity: 0.7,
-  },
-  loadMoreText: {
-    color: "#fff",
-    marginLeft: 5,
-    fontFamily: "Aeonik",
-  },
-  loadingIndicator: {
-    marginVertical: 10,
-  },
-});
 
 export default ChatScreen;

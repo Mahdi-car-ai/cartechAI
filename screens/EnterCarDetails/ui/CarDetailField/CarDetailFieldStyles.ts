@@ -40,4 +40,4 @@ export const styles = StyleSheet.create({
   inputFocused: {
     borderColor: "#95ff77",
   },
-}); 
+});

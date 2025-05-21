@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import CustomButton from "@/components/Button";
+import CustomButton from "@/components/Button/Button";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
@@ -79,7 +79,7 @@ export default function SignupScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Please allow access to your photo library to upload a profile picture.",
+        "Please allow access to your photo library to upload a profile picture."
       );
       return;
     }
@@ -128,7 +128,7 @@ export default function SignupScreen() {
     if (step1Form.password.length < 6) {
       Alert.alert(
         "Invalid Password",
-        "Password must be at least 6 characters long",
+        "Password must be at least 6 characters long"
       );
       return false;
     }
@@ -277,7 +277,7 @@ export default function SignupScreen() {
 
       await AsyncStorage.setItem(
         "userProfile",
-        JSON.stringify(userProfileData),
+        JSON.stringify(userProfileData)
       );
 
       // Only now mark registration as complete
@@ -329,7 +329,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="First Name"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step1Form.firstName}
           onChangeText={(text) =>
             setStep1Form({ ...step1Form, firstName: text })
@@ -340,7 +340,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Last Name"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step1Form.lastName}
           onChangeText={(text) =>
             setStep1Form({ ...step1Form, lastName: text })
@@ -351,7 +351,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step1Form.email}
           onChangeText={(text) => setStep1Form({ ...step1Form, email: text })}
           keyboardType="email-address"
@@ -361,7 +361,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step1Form.password}
           onChangeText={(text) =>
             setStep1Form({ ...step1Form, password: text })
@@ -373,7 +373,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Confirm Password"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step1Form.confirmPassword}
           onChangeText={(text) =>
             setStep1Form({ ...step1Form, confirmPassword: text })
@@ -385,57 +385,54 @@ export default function SignupScreen() {
         {loading ? (
           <ActivityIndicator
             size="large"
-            color="#fff"
+            color="#A4FF04"
             style={{ marginTop: 16 }}
           />
         ) : (
-          <CustomButton title="Continue" onPress={handleNextStep} />
+          <TouchableOpacity
+            style={[styles.continueButton, { width: width }]}
+            onPress={handleNextStep}
+          >
+            <Text style={styles.continueButtonText}>Continue</Text>
+          </TouchableOpacity>
         )}
 
-        <Text style={styles.or}>OR</Text>
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.or}>Or</Text>
+          <View style={styles.divider} />
+        </View>
 
         <TouchableOpacity
-          style={[
-            styles.socialButton,
-            {
-              backgroundColor: "#2a2e2e",
-            },
-          ]}
+          style={[styles.socialButton, { width: width }]}
           onPress={() => promptAsync()}
         >
           <Image
             source={require("../assets/images/google.png")}
-            style={{ width: 24, height: 24, position: "absolute", left: 16 }}
+            style={{ width: 24, height: 24, position: "absolute", left: 20 }}
           />
-          <Text style={styles.socialButtonText}>Continue with Google</Text>
+          <Text style={styles.socialButtonText}>Continue With Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.socialButton,
-            {
-              backgroundColor: "#fff",
-              marginTop: 12,
-            },
-          ]}
+          style={[styles.socialButton, { width: width }]}
           onPress={() => promptAsync()}
         >
           <FontAwesome
             name="apple"
             size={24}
-            color="#1a1b1c"
-            style={{ position: "absolute", left: 16 }}
+            color="#fff"
+            style={{ position: "absolute", left: 24 }}
           />
-          <Text style={[styles.socialButtonText, { color: "#1a1c1b" }]}>
-            Continue with Apple
-          </Text>
+          <Text style={styles.socialButtonText}>Continue With Apple</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.switchModeText}>
-            Already have an account? Sign in
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.createAccountContainer}>
+          <Text style={styles.noAccountText}>Already have an Account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.createOneText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -449,7 +446,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Phone Number *"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.phoneNumber}
           onChangeText={(text) =>
             setStep2Form({ ...step2Form, phoneNumber: text })
@@ -460,7 +457,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Company Name (Optional)"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.companyName}
           onChangeText={(text) =>
             setStep2Form({ ...step2Form, companyName: text })
@@ -472,7 +469,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Street Address"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.streetAddress1}
           onChangeText={(text) =>
             setStep2Form({ ...step2Form, streetAddress1: text })
@@ -482,7 +479,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Street Address Line 2"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.streetAddress2}
           onChangeText={(text) =>
             setStep2Form({ ...step2Form, streetAddress2: text })
@@ -492,7 +489,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="City"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.city}
           onChangeText={(text) => setStep2Form({ ...step2Form, city: text })}
         />
@@ -500,7 +497,7 @@ export default function SignupScreen() {
         <TextInput
           style={styles.input}
           placeholder="Postal / Zip Code"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={step2Form.postCode}
           onChangeText={(text) =>
             setStep2Form({ ...step2Form, postCode: text })
@@ -509,23 +506,26 @@ export default function SignupScreen() {
         />
 
         <View style={styles.buttonRow}>
-          <CustomButton
-            title="Back"
+          <TouchableOpacity
+            style={[styles.backButton, { width: width * 0.45 }]}
             onPress={handlePrevStep}
-            backgroundColor="#666"
-          />
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
 
           {loading ? (
             <ActivityIndicator
               size="large"
-              color="#2a2e2e"
+              color="#A4FF04"
               style={{ marginTop: 16 }}
             />
           ) : (
-            <CustomButton
-              title="Create Account"
+            <TouchableOpacity
+              style={[styles.continueButton, { width: width * 0.45 }]}
               onPress={handleCompleteSignup}
-            />
+            >
+              <Text style={styles.continueButtonText}>Create Account</Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -537,18 +537,16 @@ export default function SignupScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.logoContainer}>
-            <Logo />
-          </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.logoContainer}>
+          <Logo />
+        </View>
 
-          {currentStep === 1 ? renderStep1() : renderStep2()}
-        </ScrollView>
-      </View>
+        {currentStep === 1 ? renderStep1() : renderStep2()}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -556,13 +554,18 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a1c1b",
+    maxWidth: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1C2129",
   },
   scrollContainer: {
     flexGrow: 1,
+    paddingTop: 50,
+    backgroundColor: "#1C2129",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 30,
+    paddingBottom: 40,
   },
   logoContainer: {
     alignItems: "center",
@@ -592,7 +595,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     marginBottom: 24,
     overflow: "hidden",
-    backgroundColor: "#2a2e2e",
+    backgroundColor: "#2E2A32",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -615,17 +618,20 @@ const styles = StyleSheet.create({
     width: "100%",
     fontSize: 16,
     fontFamily: "Aeonik",
-    backgroundColor: "#fff",
-    color: "#1a1c1b",
+    backgroundColor: "transparent",
+    color: "#fff",
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#333",
   },
   or: {
     fontFamily: "Aeonik",
-    fontSize: 16,
-    color: "#888",
+    fontSize: 14,
+    color: "#777",
+    paddingHorizontal: 10,
     marginVertical: 16,
     textAlign: "center",
   },
@@ -634,8 +640,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 14,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 30,
+    marginBottom: 12,
+    backgroundColor: "#2E2A32",
   },
   socialButtonText: {
     color: "#fff",
@@ -649,7 +657,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   buttonRow: {
-    justifyContent: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     marginTop: 16,
+  },
+  continueButton: {
+    backgroundColor: "#A4FF04",
+    padding: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  continueButtonText: {
+    color: "#000",
+    fontSize: 18,
+    fontWeight: "500",
+    fontFamily: "Aeonik",
+  },
+  backButton: {
+    backgroundColor: "#2E2A32",
+    padding: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  backButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "500",
+    fontFamily: "Aeonik",
+  },
+  createAccountContainer: {
+    flexDirection: "row",
+    marginVertical: 24,
+  },
+  noAccountText: {
+    color: "#fff",
+    fontFamily: "Aeonik",
+  },
+  createOneText: {
+    color: "#A4FF04",
+    fontFamily: "Aeonik",
+    fontWeight: "500",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#333",
   },
 });

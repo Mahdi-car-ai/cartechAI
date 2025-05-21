@@ -14,6 +14,7 @@ import Logo from "@/components/ui/Logo";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { getCommunityChats, CommunityChat } from "@/utils/Community";
+// import { styles } from "./CommunityScreenStyles";
 
 // Define navigation types
 type RootStackParamList = {
@@ -39,17 +40,18 @@ const CommunityScreen = () => {
     setLoading(true);
     try {
       const communityChats = await getCommunityChats();
-      
+
       // Filter chats based on search query
       let filteredChats = communityChats;
       if (searchQuery) {
         const lowerCaseQuery = searchQuery.toLowerCase();
-        filteredChats = communityChats.filter(chat => 
-          chat.topic.toLowerCase().includes(lowerCaseQuery) || 
-          chat.description.toLowerCase().includes(lowerCaseQuery)
+        filteredChats = communityChats.filter(
+          (chat) =>
+            chat.topic.toLowerCase().includes(lowerCaseQuery) ||
+            chat.description.toLowerCase().includes(lowerCaseQuery)
         );
       }
-      
+
       setChats(filteredChats);
     } catch (error) {
       console.error("Error fetching community chats:", error);
@@ -64,7 +66,7 @@ const CommunityScreen = () => {
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    // Note: Filters would need to be implemented with backend filtering 
+    // Note: Filters would need to be implemented with backend filtering
     // or moved to local filtering based on available data
   };
 
@@ -263,18 +265,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 16,
-    backgroundColor: "#2a2e2e",
+    backgroundColor: "#A3FE07",
     alignItems: "center",
     marginHorizontal: 4,
     flex: 1,
   },
   activeFilterButton: {
-    backgroundColor: "#95ff77",
+    backgroundColor: "#C4FF57",
   },
   filterButtonText: {
     fontSize: 16,
     alignContent: "center",
-    color: "#fff",
+    color: "#111",
     fontFamily: "Aeonik",
   },
   postCard: {

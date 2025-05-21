@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { Icon } from "react-native-elements";
-import Logo from "./ui/Logo";
+import Logo from "../ui/Logo";
 import { getChats } from "@/utils/Chat";
 import { RootStackParamList } from "@/types/NavigationTypes";
 import { CategorizedChats, ChatItem } from "@/types/chat";
@@ -42,7 +42,7 @@ const categorizeChats = (chats: ChatItem[]): CategorizedChats => {
     chatDate.setHours(0, 0, 0, 0);
 
     const diffInDays = Math.floor(
-      (today.getTime() - chatDate.getTime()) / (1000 * 60 * 60 * 24),
+      (today.getTime() - chatDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     if (diffInDays === 0) {
@@ -160,9 +160,10 @@ const CustomDrawer = (props: DrawerProps) => {
                 });
               }}
             >
-              <Text
-                style={styles.chatText}
-              >{`Chat ${item.id.substring(0, 8)}...`}</Text>
+              <Text style={styles.chatText}>{`Chat ${item.id.substring(
+                0,
+                8
+              )}...`}</Text>
             </TouchableOpacity>
           );
         })}
@@ -188,7 +189,7 @@ const CustomDrawer = (props: DrawerProps) => {
           <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
         ) : (
           <Image
-            source={require("../assets/images/icons/user.png")}
+            source={require("../../assets/images/icons/user.png")}
             style={styles.profileImage}
           />
         )}

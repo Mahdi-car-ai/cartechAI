@@ -58,7 +58,7 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecItem("Doors", specifications.basic.doors)}
               {renderSpecItem(
                 "Vehicle Size",
-                specifications.basic.vehicle_size,
+                specifications.basic.vehicle_size
               )}
             </>
           )}
@@ -68,21 +68,21 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecSectionHeader("Engine")}
               {renderSpecItem(
                 "Displacement",
-                specifications.engine["displacement_(l_ci)"],
+                specifications.engine["displacement_(l_ci)"]
               )}
               {renderSpecItem(
                 "Engine Model",
-                specifications.engine.engine_model,
+                specifications.engine.engine_model
               )}
               {renderSpecItem(
                 "Engine Camshaft",
-                specifications.engine.engine_camshaft,
+                specifications.engine.engine_camshaft
               )}
               {renderSpecItem("Net Torque", specifications.engine.net_torque)}
               {renderSpecItem("Horsepower", specifications.engine.horsepower)}
               {renderSpecItem(
                 "SAE Net Horsepower RPM",
-                specifications.engine.sae_net_horsepower_rpm,
+                specifications.engine.sae_net_horsepower_rpm
               )}
             </>
           )}
@@ -92,7 +92,7 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecSectionHeader("Transmission")}
               {renderSpecItem(
                 "Transmission Style",
-                specifications.transmission.transmission_style,
+                specifications.transmission.transmission_style
               )}
             </>
           )}
@@ -105,32 +105,32 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecItem("Length", specifications.dimensions.length)}
               {renderSpecItem(
                 "Ground Clearance",
-                specifications.dimensions.min_ground_clearance,
+                specifications.dimensions.min_ground_clearance
               )}
               {renderSpecItem("Wheelbase", specifications.dimensions.wheelbase)}
               {renderSpecItem(
                 "Trunk Volume",
-                specifications.dimensions.trunk_volume,
+                specifications.dimensions.trunk_volume
               )}
               {renderSpecItem(
                 "Front Legroom",
-                specifications.dimensions.front_legroom,
+                specifications.dimensions.front_legroom
               )}
               {renderSpecItem(
                 "Rear Legroom",
-                specifications.dimensions.rear_legroom,
+                specifications.dimensions.rear_legroom
               )}
               {renderSpecItem(
                 "Front Headroom",
-                specifications.dimensions.rear_head_room,
+                specifications.dimensions.rear_head_room
               )}
               {renderSpecItem(
                 "Front Shoulder Room",
-                specifications.dimensions.front_shoulder_room,
+                specifications.dimensions.front_shoulder_room
               )}
               {renderSpecItem(
                 "Rear Shoulder Room",
-                specifications.dimensions.rear_shoulder_room,
+                specifications.dimensions.rear_shoulder_room
               )}
             </>
           )}
@@ -140,11 +140,11 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecSectionHeader("Drivetrain")}
               {renderSpecItem(
                 "Drive Type",
-                specifications.drivetrain.drive_type,
+                specifications.drivetrain.drive_type
               )}
               {renderSpecItem(
                 "Final Drive Axle Ratio",
-                specifications.drivetrain.final_drive_axle_ratio,
+                specifications.drivetrain.final_drive_axle_ratio
               )}
             </>
           )}
@@ -154,11 +154,11 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecSectionHeader("Braking")}
               {renderSpecItem(
                 "Front Brake Type",
-                specifications.braking.front_brake_type,
+                specifications.braking.front_brake_type
               )}
               {renderSpecItem(
                 "Rear Brake Type",
-                specifications.braking.rear_brake_type,
+                specifications.braking.rear_brake_type
               )}
               {renderSpecItem("Disc Front", specifications.braking.disc_front)}
             </>
@@ -169,15 +169,15 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecSectionHeader("Suspension")}
               {renderSpecItem(
                 "Steering Type",
-                specifications.suspension.steering_type,
+                specifications.suspension.steering_type
               )}
               {renderSpecItem(
                 "Rear Suspension",
-                specifications.suspension.rear_suspension,
+                specifications.suspension.rear_suspension
               )}
               {renderSpecItem(
                 "Front Suspension",
-                specifications.suspension.suspension_type_front_cont,
+                specifications.suspension.suspension_type_front_cont
               )}
             </>
           )}
@@ -196,11 +196,11 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecItem("City Mileage", specifications.fuel.city_mileage)}
               {renderSpecItem(
                 "Highway Mileage",
-                specifications.fuel.highway_mileage,
+                specifications.fuel.highway_mileage
               )}
               {renderSpecItem(
                 "Fuel Capacity",
-                specifications.fuel.fuel_capacity,
+                specifications.fuel.fuel_capacity
               )}
             </>
           )}
@@ -211,7 +211,7 @@ export const DetailedSpecifications: React.FC<DetailedSpecificationsProps> = ({
               {renderSpecItem("MSRP", specifications.market_value.msrp)}
               {renderSpecItem(
                 "Destination Charge",
-                specifications.market_value.destination_charge || "N/A",
+                specifications.market_value.destination_charge || "N/A"
               )}
             </>
           )}

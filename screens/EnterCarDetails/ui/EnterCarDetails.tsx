@@ -8,8 +8,9 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Alert,
+  ImageBackground,
 } from "react-native";
-import CustomButton from "@/components/Button";
+import CustomButton from "@/components/Button/Button";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import Logo from "@/components/ui/Logo";
@@ -84,22 +85,22 @@ export default function EnterCarDetailsScreen() {
       case "make":
         setFilteredMakes(
           makes.filter((make) =>
-            make.toLowerCase().includes(searchText.toLowerCase()),
-          ),
+            make.toLowerCase().includes(searchText.toLowerCase())
+          )
         );
         break;
       case "model":
         setFilteredModels(
           models.filter((model) =>
-            model.toLowerCase().includes(searchText.toLowerCase()),
-          ),
+            model.toLowerCase().includes(searchText.toLowerCase())
+          )
         );
         break;
       case "trim":
         setFilteredTrims(
           trims.filter((trim) =>
-            trim.toLowerCase().includes(searchText.toLowerCase()),
-          ),
+            trim.toLowerCase().includes(searchText.toLowerCase())
+          )
         );
         break;
       default:
@@ -164,7 +165,7 @@ export default function EnterCarDetailsScreen() {
       const data = await fetchCarTrims(
         carDetails.modelYear,
         carDetails.make,
-        carDetails.model,
+        carDetails.model
       );
       setTrims(data);
       setFilteredTrims(data);
@@ -179,7 +180,7 @@ export default function EnterCarDetailsScreen() {
     year: string,
     make: string,
     model: string,
-    trim: string,
+    trim: string
   ) => {
     try {
       if (!year || !make || !model || !trim) {
@@ -236,13 +237,13 @@ export default function EnterCarDetailsScreen() {
         Alert.alert(
           "Access Error",
           "You don't have access to this vehicle data API. Please check your API credentials or subscription.",
-          [{ text: "OK" }],
+          [{ text: "OK" }]
         );
       } else {
         Alert.alert(
           "Error",
           "Failed to load vehicle specifications. Please try again later.",
-          [{ text: "OK" }],
+          [{ text: "OK" }]
         );
       }
     } finally {
@@ -321,7 +322,7 @@ export default function EnterCarDetailsScreen() {
         updatedDetails.modelYear,
         updatedDetails.make,
         updatedDetails.model,
-        updatedDetails.trim,
+        updatedDetails.trim
       );
     }
   };
@@ -572,82 +573,93 @@ export default function EnterCarDetailsScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center", paddingTop: 50 },
-        ]}
+    <View style={styles.root}>
+      <ImageBackground
+        source={require("@/assets/images/ellipse.png")} // ✅ THIS is the ellipse image
+        style={styles.imageOverlay}
+        resizeMode="cover"
       >
-        <Logo />
-
-        {specLoading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#95ff77" />
-            <Text style={styles.loadingText}>
-              Loading car specifications...
-            </Text>
-          </View>
-        )}
-
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <View style={styles.instructionsContainer}>
-            <Text style={styles.instructionsText}>
-              Select Year, Make, Model, and Trim, or edit fields manually.
-            </Text>
-            <Text style={styles.instructionsSubtext}>
-              Dashed fields can be edited even after auto-filling.
-            </Text>
-          </View>
+          <View
+            style={[
+              styles.container,
+              {
+                justifyContent: "center",
+                alignItems: "center",
+                paddingTop: 50,
+              },
+            ]}
+          >
+            <Logo />
 
-          {Object.keys(carDetails).map((key) => (
-            <CarDetailField
-              key={key}
-              fieldKey={key}
-              value={carDetails[key as keyof ScreenCarDetails]}
-              width={width}
-              focusedInput={focusedInput}
-              isFieldDisabled={isFieldDisabled}
-              isFieldManuallyEditable={isFieldManuallyEditable}
-              onPress={openModal}
-              handleChange={handleChange}
-              onFocus={setFocusedInput}
-              onBlur={() => setFocusedInput(null)}
+            {specLoading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#95ff77" />
+                <Text style={styles.loadingText}>
+                  Loading car specifications...
+                </Text>
+              </View>
+            )}
+
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.instructionsContainer}>
+                <Text style={styles.instructionsText}>
+                  Select Year, Make, Model, and Trim, or edit fields manually.
+                </Text>
+                <Text style={styles.instructionsSubtext}>
+                  Dashed fields can be edited even after auto-filling.
+                </Text>
+              </View>
+
+              {Object.keys(carDetails).map((key) => (
+                <CarDetailField
+                  key={key}
+                  fieldKey={key}
+                  value={carDetails[key as keyof ScreenCarDetails]}
+                  width={width}
+                  focusedInput={focusedInput}
+                  isFieldDisabled={isFieldDisabled}
+                  isFieldManuallyEditable={isFieldManuallyEditable}
+                  onPress={openModal}
+                  handleChange={handleChange}
+                  onFocus={setFocusedInput}
+                  onBlur={() => setFocusedInput(null)}
+                />
+              ))}
+
+              {specifications && (
+                <DetailedSpecifications specifications={specifications} />
+              )}
+            </ScrollView>
+
+            <CustomButton
+              title="Chat"
+              onPress={goToChat}
+              style={styles.chatButton}
+              disabled={!isAnyFieldFilled() || chatLoading}
+              loading={chatLoading}
             />
-          ))}
 
-          {specifications && (
-            <DetailedSpecifications specifications={specifications} />
-          )}
-        </ScrollView>
-
-        <CustomButton
-          title="Chat"
-          icon="chat"
-          onPress={goToChat}
-          style={styles.chatButton}
-          disabled={!isAnyFieldFilled() || chatLoading}
-          loading={chatLoading}
-        />
-
-        <SelectionModal
-          visible={activeModal !== null}
-          title={getModalTitle()}
-          searchText={searchText}
-          onSearchTextChange={setSearchText}
-          onClose={() => setActiveModal(null)}
-          onSelectOption={handleOptionSelect}
-          options={getModalOptions()}
-          loading={loading}
-          keyboardType={activeModal === "modelYear" ? "numeric" : "default"}
-        />
-      </View>
-    </KeyboardAvoidingView>
+            <SelectionModal
+              visible={activeModal !== null}
+              title={getModalTitle()}
+              searchText={searchText}
+              onSearchTextChange={setSearchText}
+              onClose={() => setActiveModal(null)}
+              onSelectOption={handleOptionSelect}
+              options={getModalOptions()}
+              loading={loading}
+              keyboardType={activeModal === "modelYear" ? "numeric" : "default"}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </View>
   );
 }

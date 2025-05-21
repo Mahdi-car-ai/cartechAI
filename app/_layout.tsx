@@ -11,17 +11,17 @@ import {
   DrawerToggleButton,
   useDrawerStatus,
 } from "@react-navigation/drawer";
-import HomeScreen from "../screens/HomeScreen";
-import CarDetailsScreen from "../screens/CarDetailsScreen";
-import ChatScreen from "@/screens/ChatScreen";
+import HomeScreen from "@/screens/HomeScreen/HomeScreen";
+import CarDetailsScreen from "@/screens/CarDetailsScreen/CarDetailsScreen";
+import ChatScreen from "@/screens/ChatScreen/ChatScreen";
 import EnterCarDetailsScreen from "@/screens/EnterCarDetails/ui/EnterCarDetails";
 import LoginScreen from "@/screens/LoginScreen";
 import SignupScreen from "@/screens/SignupScreen";
-import CustomDrawer from "@/components/CustomDrawer";
+import CustomDrawer from "@/components/CustomDrawer/CustomDrawer";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
-import CommunityScreen from "@/screens/CommunityScreen";
-import UserScreen from "@/screens/UserScreen";
+import CommunityScreen from "@/screens/CommunityScreen/CommunityScreen";
+import UserScreen from "../screens/UserScreen/UserScreen";
 import CreatePostScreen from "@/screens/CreatePostScreen";
 import PostDetailsScreen from "@/screens/PostDetailsScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
           ? 58
           : 20 // Adjust for different iOS devices
         : StatusBar.currentHeight
-          ? StatusBar.currentHeight + 10
-          : 16,
+        ? StatusBar.currentHeight + 10
+        : 16,
     left: 16, // Adjust this value based on your layout
     zIndex: 100,
     backgroundColor: "transparent", // Ensure the button is visible

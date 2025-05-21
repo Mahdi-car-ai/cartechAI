@@ -1,3 +1,3 @@
-import VoiceExample from '../screens/VoiceExample';
+import VoiceExample from "../screens/VoiceExample/VoiceExample";
 
-export default VoiceExample; 
+export default VoiceExample;

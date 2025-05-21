@@ -1,12 +1,22 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+  root: {
+    // dev current background color
+    flex: 1,
+    backgroundColor: "#1a1c1b",
+  },
+  imageOverlay: {
+    // dev current ellips
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: {
     flexGrow: 1,
     paddingBottom: 24,
     height: "100%",
     justifyContent: "center",
-    backgroundColor: "#1a1c1b",
   },
   chatButton: {
     width: "auto",
@@ -44,7 +54,7 @@ export const styles = StyleSheet.create({
   },
   filledInput: {
     borderColor: "#3a9c4d",
-    backgroundColor: "#1a1c1b",
+    backgroundColor: "#111",
   },
   emptyInput: {
     borderColor: "#444",
@@ -138,19 +148,19 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     zIndex: 1000,
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(26, 28, 27, 0.8)',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(26, 28, 27, 0.8)",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Aeonik',
+    color: "#fff",
+    fontFamily: "Aeonik",
   },
   // New styles for detailed specifications
   detailedSpecsContainer: {
@@ -168,9 +178,10 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 10,
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#2a2e2e",
+    borderRadius: 15,
+    backgroundColor: "rgba(51, 51, 51, 0.5)", // #333 with 60% opacity
   },
+
   instructionsText: {
     fontSize: 16,
     fontFamily: "Aeonik",
@@ -181,7 +192,7 @@ export const styles = StyleSheet.create({
   instructionsSubtext: {
     fontSize: 14,
     fontFamily: "Aeonik",
-    color: "#95ff77",
+    color: "#A3FE07",
     textAlign: "center",
   },
   specsTitleBar: {
@@ -195,7 +206,7 @@ export const styles = StyleSheet.create({
   specsTitleText: {
     fontSize: 18,
     fontFamily: "Aeonik",
-    color: "#95ff77",
+    color: "#95ff77", // dev
     fontWeight: "bold",
   },
   specSectionHeader: {

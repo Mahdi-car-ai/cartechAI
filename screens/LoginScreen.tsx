@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import CustomButton from "@/components/Button";
+import CustomButton from "@/components/Button/Button";
 import * as Google from "expo-auth-session/providers/google";
 import { FontAwesome } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
@@ -62,7 +62,7 @@ export default function LoginScreen() {
     if (!email || !password) {
       Alert.alert(
         "Missing Information",
-        "Please enter both email and password.",
+        "Please enter both email and password."
       );
       return;
     }
@@ -100,24 +100,28 @@ export default function LoginScreen() {
     if (!email || !password) {
       Alert.alert(
         "Missing Information",
-        "Please enter both email and password.",
+        "Please enter both email and password."
       );
       return;
     }
     setLoading(true);
     try {
       console.log(`Attempting to login with API URL: ${API_URL}`);
-      
-      const response = await axios.post(`${API_URL}/auth/signin`, {
-        email: email.trim(),
-        password,
-      }, {
-        timeout: 15000, // 15 second timeout
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+
+      const response = await axios.post(
+        `${API_URL}/auth/signin`,
+        {
+          email: email.trim(),
+          password,
+        },
+        {
+          timeout: 15000, // 15 second timeout
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         }
-      });
+      );
 
       const responseData = response.data as AuthTokens;
 
@@ -131,7 +135,7 @@ export default function LoginScreen() {
       reloadApp();
     } catch (error: unknown) {
       console.error("Login error details:", error);
-      
+
       let errorMessage = "Login failed. Please try again.";
       let errorDetails = "";
 
@@ -144,7 +148,8 @@ export default function LoginScreen() {
         console.log("Error response:", apiError.response.data);
       } else if (apiError.request) {
         // The request was made but no response was received
-        errorMessage = "No response from server. Please check your network connection.";
+        errorMessage =
+          "No response from server. Please check your network connection.";
         errorDetails = "Network or server might be down";
         console.log("No response received:", apiError.request);
       } else {
@@ -163,12 +168,12 @@ export default function LoginScreen() {
   const fetchUserData = async (accessToken: string) => {
     try {
       console.log(`Fetching user data from: ${API_URL}/auth/me`);
-      
+
       const response = await axios.get(`${API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         timeout: 10000, // 10 second timeout
       });
@@ -179,7 +184,7 @@ export default function LoginScreen() {
     } catch (error) {
       console.error("Error fetching user data:", error);
       console.log("Creating basic profile due to fetch error");
-      
+
       const basicProfile = {
         firstName: "User",
         lastName: "",
@@ -239,113 +244,104 @@ export default function LoginScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View
-            style={{
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-            }}
-          >
-            <Logo />
-          </View>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View
+        // style={{
+        //   alignItems: "center",
+        //   justifyContent: "center",
+        //   flexDirection: "row",
+        // }}
+        >
+          <Logo />
+        </View>
 
-          <Text style={styles.subtitle}>
-            AI-Powered Solutions for Every Car Problem
-          </Text>
-          <TextInput
-            style={[styles.input, { width: width, color: "#1a1c1b" }]}
-            placeholder="Email"
-            placeholderTextColor="#ddd"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={[styles.input, { width: width, color: "#1a1c1b" }]}
-            placeholder="Password"
-            placeholderTextColor="#ddd"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
-          {isLogin ? (
-            <CustomButton
-              title="Login with email"
-              icon="mail"
-              color="#1a1c1b"
-              iconColor="#1a1c1b"
-              onPress={handleLoginWithEmailAndPassword}
-            />
-          ) : (
-            <CustomButton
-              title="Sign up with email"
-              icon="email"
-              onPress={handleCreateUser}
-            />
-          )}
-          <Text style={styles.or}>OR</Text>
-          <TouchableOpacity
-            style={[
-              styles.socialButton,
-              {
-                width: width,
-                backgroundColor: "#2a2e2e",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-              },
-            ]}
-            onPress={() => promptAsync()}
-          >
-            <Image
-              source={require("../assets/images/google.png")}
-              style={{ width: 30, height: 30, position: "absolute", left: 18 }}
-            />
-            <Text
-              style={[{ color: "#fff", fontSize: 16, fontFamily: "Aeonik" }]}
-            >
-              Continue with Google
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.socialButton,
-              {
-                width: width,
-                backgroundColor: "#fff",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 0,
-              },
-            ]}
-            onPress={() => promptAsync()}
-          >
-            <FontAwesome
-              name="apple"
-              size={24}
-              color="#1a1b1c"
-              style={{ position: "absolute", left: 24 }}
-            />
-            <Text
-              style={[{ color: "#1a1c1b", fontSize: 16, fontFamily: "Aeonik" }]}
-            >
-              Continue with Apple
-            </Text>
-          </TouchableOpacity>
+        <Text style={styles.subtitle}>
+          AI-Powered Solutions for Every Car Problem
+        </Text>
+        <TextInput
+          style={[styles.input, { width: width }]}
+          placeholder="Email"
+          placeholderTextColor="#7A7A7A"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={[styles.input, { width: width }]}
+          placeholder="Password"
+          placeholderTextColor="#7A7A7A"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        <TouchableOpacity
+          style={[styles.continueButton, { width: width }]}
+          onPress={handleLoginWithEmailAndPassword}
+        >
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+
+        <View style={styles.createAccountContainer}>
+          <Text style={styles.noAccountText}>Dont have an Account? </Text>
           <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-            <Text
-              style={{ color: "#fff", marginTop: 16, fontFamily: "Aeonik" }}
-            >
-              Don't have an account? Sign up
-            </Text>
+            <Text style={styles.createOneText}>Create One</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </View>
+        </View>
+
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.or}>Or</Text>
+          <View style={styles.divider} />
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.socialButton,
+            { width: width, backgroundColor: "#2E2A32" },
+          ]}
+          onPress={() => promptAsync()}
+        >
+          <FontAwesome
+            name="apple"
+            size={24}
+            color="#fff"
+            style={{ position: "absolute", left: 24 }}
+          />
+          <Text style={styles.socialButtonText}>Continue With Apple</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.socialButton,
+            { width: width, backgroundColor: "#2E2A32" },
+          ]}
+          onPress={() => promptAsync()}
+        >
+          <Image
+            source={require("../assets/images/google.png")}
+            style={{ width: 24, height: 24, position: "absolute", left: 20 }}
+          />
+          <Text style={styles.socialButtonText}>Continue With Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.socialButton,
+            { width: width, backgroundColor: "#2E2A32" },
+          ]}
+        >
+          <FontAwesome
+            name="facebook"
+            size={24}
+            color="#3b5998"
+            style={{ position: "absolute", left: 24 }}
+          />
+          <Text style={styles.socialButtonText}>Continue With Facebook</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -353,15 +349,18 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    maxWidth: "100%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1a1c1b",
+    backgroundColor: "#1C2129",
   },
   scrollContainer: {
     flexGrow: 1,
+    backgroundColor: "#1C2129",
+
     justifyContent: "center",
     alignItems: "center",
-    width: "100%",
+    paddingBottom: 40,
   },
   title: {
     fontSize: 24,
@@ -371,39 +370,81 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#fff",
   },
-  or: {
-    fontFamily: "Aeonik",
-    fontSize: 12,
-    color: "#555D58",
-    textAlign: "center",
-  },
   subtitle: {
-    fontSize: 32,
+    fontSize: 24,
     fontFamily: "Aeonik",
-    margin: 16,
+    marginVertical: 24,
     textAlign: "center",
     color: "#fff",
-  },
-  socialButton: {
-    width: "100%",
-    padding: 16,
-    borderRadius: 16,
-    margin: 16,
-    textAlign: "center",
-    alignItems: "center",
-    justifyContent: "space-between",
-    fontFamily: "Aeonik",
+    width: "80%",
   },
   input: {
     fontSize: 16,
     fontFamily: "Aeonik",
-    backgroundColor: "#fff",
-    color: "#000",
-    borderRadius: 16,
+    backgroundColor: "transparent",
+    color: "#fff",
+    borderRadius: 12,
     paddingHorizontal: 18,
     paddingVertical: 16,
-    marginTop: 16,
-    textAlign: "center",
-    width: "80%",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  continueButton: {
+    backgroundColor: "#A4FF04",
+    padding: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  continueButtonText: {
+    color: "#000",
+    fontSize: 18,
+    fontWeight: "500",
+    fontFamily: "Aeonik",
+  },
+  createAccountContainer: {
+    flexDirection: "row",
+    marginVertical: 8,
+  },
+  noAccountText: {
+    color: "#fff",
+    fontFamily: "Aeonik",
+  },
+  createOneText: {
+    color: "#A4FF04",
+    fontFamily: "Aeonik",
+    fontWeight: "500",
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#333",
+  },
+  or: {
+    fontFamily: "Aeonik",
+    fontSize: 14,
+    color: "#777",
+    paddingHorizontal: 10,
+  },
+  socialButton: {
+    padding: 16,
+    borderRadius: 30,
+    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  socialButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Aeonik",
   },
 });

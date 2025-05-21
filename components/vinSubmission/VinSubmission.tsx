@@ -1,7 +1,6 @@
 import React, { FC, useState } from "react";
 import {
   Alert,
-  StyleSheet,
   TextInput,
   useWindowDimensions,
   TouchableOpacity,
@@ -9,13 +8,14 @@ import {
 } from "react-native";
 import { useDispatch } from "react-redux";
 import { addVinToHistory } from "@/store/slices/vinHistorySlice";
-import CustomButton from "@/components/Button";
+import CustomButton from "@/components/Button/Button";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/types/NavigationTypes";
 import VinHistoryModal from "./VinHistoryModal";
 import VinScannerButton from "./VinScannerButton";
 import { Ionicons } from "@expo/vector-icons";
+import { styles } from "./VinSubmissionStyles";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -48,11 +48,12 @@ const VinSubmission: FC = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={[styles.input, { width: useWindowDimensions().width * 0.9 }]}
-          placeholder="Enter VIN (e.g., 1HGCM82633A123456)"
-          placeholderTextColor={"#ddd"}
+          placeholder="Edit Car Details"
+          placeholderTextColor={"#F9F9F9"}
           value={vin}
           maxLength={17}
           onChangeText={setVin}
+          selectionColor={"#A3FE07"}
           // onFocus={() => setHistoryModalVisible(true)}
         />
         <VinScannerButton onVinDetected={handleVinDetected} />
@@ -74,8 +75,8 @@ const VinSubmission: FC = () => {
       </View>
 
       <CustomButton
-        title="Look Up"
-        icon="search"
+        title="Continue"
+        // icon="search"
         onPress={handleVinSubmission}
       />
 
@@ -87,39 +88,5 @@ const VinSubmission: FC = () => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  inputContainer: {
-    position: "relative",
-    width: "100%",
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  input: {
-    fontFamily: "Aeonik",
-    padding: 16,
-    fontSize: 16,
-    borderRadius: 16,
-    backgroundColor: "#fff",
-    textAlign: "center",
-  },
-  clearButton: {
-    position: "absolute",
-    right: "3%",
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
-    padding: 5,
-  },
-  historyButton: {
-    position: "absolute",
-    right: "3%",
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
-    padding: 5,
-  },
-});
 
 export default VinSubmission;

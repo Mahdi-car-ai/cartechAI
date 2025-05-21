@@ -16,7 +16,7 @@ import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "@/types/NavigationTypes";
-import CustomButton from "@/components/Button";
+import CustomButton from "@/components/Button/Button";
 import { Ionicons } from "@expo/vector-icons";
 import { styles } from "@/components/plateSubmission/PlateSubmissionStyles";
 import { LicensePlateResponse } from "@/components/plateSubmission/model/types/LicensePlateResponse";
@@ -42,7 +42,7 @@ const PlateSubmission: FC = () => {
   useEffect(() => {
     if (stateSearch) {
       const filtered = US_STATES.filter((state) =>
-        state.toLowerCase().includes(stateSearch.toLowerCase()),
+        state.toLowerCase().includes(stateSearch.toLowerCase())
       );
       setFilteredStates(filtered);
     } else {
@@ -70,7 +70,10 @@ const PlateSubmission: FC = () => {
     setStateCode(state);
   };
 
-  const handlePlateDetected = (detectedPlate: string, detectedState: string) => {
+  const handlePlateDetected = (
+    detectedPlate: string,
+    detectedState: string
+  ) => {
     setLicensePlate(detectedPlate);
     if (detectedState) {
       setStateCode(detectedState);
@@ -81,7 +84,7 @@ const PlateSubmission: FC = () => {
     if (!licensePlate.trim()) {
       Alert.alert(
         "Invalid Input",
-        "Please enter a valid license plate number.",
+        "Please enter a valid license plate number."
       );
       return;
     }
@@ -95,7 +98,7 @@ const PlateSubmission: FC = () => {
       addLicensePlateToHistory({
         plate: licensePlate.trim(),
         state: stateCode,
-      }),
+      })
     );
 
     try {
@@ -106,7 +109,7 @@ const PlateSubmission: FC = () => {
           headers: {
             "x-AuthKey": apiKey,
           },
-        },
+        }
       );
 
       if (response.data.status === "success" && response.data.data.intro.vin) {
@@ -115,7 +118,7 @@ const PlateSubmission: FC = () => {
       } else {
         Alert.alert(
           "Error",
-          "Could not find vehicle information for this license plate.",
+          "Could not find vehicle information for this license plate."
         );
       }
     } catch (error) {
@@ -161,7 +164,7 @@ const PlateSubmission: FC = () => {
         <Ionicons
           name={showStatePicker ? "chevron-up" : "chevron-down"}
           size={24}
-          color="#999"
+          color="#fff"
         />
       </TouchableOpacity>
 
@@ -177,7 +180,7 @@ const PlateSubmission: FC = () => {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Select State</Text>
                 <TouchableOpacity onPress={toggleStatePicker}>
-                  <Ionicons name="close" size={24} color="#000" />
+                  <Ionicons name="close" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
               <View style={styles.searchContainer}>

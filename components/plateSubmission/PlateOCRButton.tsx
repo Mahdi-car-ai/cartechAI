@@ -8,6 +8,7 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  ImageBackground,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -40,7 +41,7 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos.",
+        "Camera permission is required to take photos."
       );
       return;
     }
@@ -69,7 +70,7 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Media library permission is required to select images.",
+        "Media library permission is required to select images."
       );
       return;
     }
@@ -117,7 +118,7 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
       const response = await axios.post<PlateOcrResponse>(
         "https://api.vehicledatabases.com/licenseplate-ocr",
         formData,
-        { headers },
+        { headers }
       );
 
       if (
@@ -131,14 +132,14 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
       } else {
         Alert.alert(
           "Error",
-          "No license plate could be detected from the image. Please try again.",
+          "No license plate could be detected from the image. Please try again."
         );
       }
     } catch (error) {
       console.error("Error detecting license plate:", error);
       Alert.alert(
         "Error",
-        "Failed to detect license plate from the image. Please try again.",
+        "Failed to detect license plate from the image. Please try again."
       );
     } finally {
       setLoading(false);
@@ -161,6 +162,12 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
 
   return (
     <>
+      {/* <View style={styles.root}>
+       <ImageBackground
+        source={require("@/assets/images/ellipse.png")} // ✅ THIS is the ellipse image
+        style={styles.imageOverlay}
+        resizeMode="cover"
+      > */}
       <TouchableOpacity
         style={styles.scanButton}
         onPress={() => setShowMediaOptions(true)}
@@ -257,11 +264,22 @@ const PlateOCRButton: React.FC<PlateOCRButtonProps> = ({ onPlateDetected }) => {
           </View>
         </View>
       </Modal>
+      {/* </ImageBackground> */}
+      {/* </View> */}
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#1a1c1b",
+  },
+  imageOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   scanButton: {
     position: "absolute",
     left: 16,
